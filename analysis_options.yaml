@@ -1,0 +1,13 @@
+include: package:pedantic/analysis_options.yaml
+  
+analyzer:
+  errors:
+    prefer_const_declarations: error
+    prefer_const_constructors: error
+    missing_required_param: error
+
+linter:
+  rules:
+    prefer_const_declarations: true
+    prefer_const_constructors: true
+    missing_required_param: true
