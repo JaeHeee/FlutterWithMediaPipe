@@ -1,0 +1,34 @@
+PODS:
+  - camera (0.0.1):
+    - Flutter
+  - Flutter (1.0.0)
+  - path_provider (0.0.1):
+    - Flutter
+  - tflite_flutter (0.1.0):
+    - Flutter
+
+DEPENDENCIES:
+  - camera (from `.symlinks/plugins/camera/ios`)
+  - Flutter (from `Flutter`)
+  - path_provider (from `.symlinks/plugins/path_provider/ios`)
+  - tflite_flutter (from `.symlinks/plugins/tflite_flutter/ios`)
+
+EXTERNAL SOURCES:
+  camera:
+    :path: ".symlinks/plugins/camera/ios"
+  Flutter:
+    :path: Flutter
+  path_provider:
+    :path: ".symlinks/plugins/path_provider/ios"
+  tflite_flutter:
+    :path: ".symlinks/plugins/tflite_flutter/ios"
+
+SPEC CHECKSUMS:
+  camera: 3164201dc344383e62282964016528c4f5a9ad50
+  Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
+  path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
+  tflite_flutter: 9157a660578930a99728974f247369af1c3595d5
+
+PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
+
+COCOAPODS: 1.10.1
