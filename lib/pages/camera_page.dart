@@ -16,6 +16,8 @@ class CameraPage extends StatefulWidget {
 
 class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   CameraController _cameraController;
+  List<CameraDescription> _cameras;
+  CameraDescription _cameraDescription;
   CameraImage _cameraImage;
   bool _isRun;
 
@@ -48,11 +50,12 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  // camera
   Future<void> initCamera() async {
-    final cameras = await availableCameras();
-    final rearCamera = cameras[1];
+    _cameras = await availableCameras();
+    _cameraDescription = _cameras[1];
     _isRun = false;
-    onNewCameraSelected(rearCamera);
+    onNewCameraSelected(_cameraDescription);
   }
 
   void onNewCameraSelected(CameraDescription cameraDescription) async {
@@ -98,6 +101,16 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     }
   }
 
+  void _cameraDirectionToggle() {
+    _isRun = false;
+    if (_cameraController.description.lensDirection ==
+        _cameras.first.lensDirection) {
+      onNewCameraSelected(_cameras.last);
+    } else {
+      onNewCameraSelected(_cameras.first);
+    }
+  }
+
   void showInSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -110,32 +123,54 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     showInSnackBar('Error: ${e.code}\n${e.description}');
   }
 
+  // Widget
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
       appBar: _buildAppBar(),
       body: _buildCameraPreview(),
-      floatingActionButton: IconButton(
-        onPressed: () {
-          setState(() {
-            _imageStreamToggle();
-          });
-        },
-        color: Colors.white,
-        iconSize: ScreenUtil().setWidth(30.0),
-        icon: const Icon(
-          Icons.camera,
-        ),
-      ),
+      floatingActionButton: _buildFloatingActionButton(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  Row _buildFloatingActionButton() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        IconButton(
+          onPressed: () {
+            _cameraDirectionToggle();
+          },
+          color: Colors.white,
+          iconSize: ScreenUtil().setWidth(30.0),
+          icon: const Icon(
+            Icons.cameraswitch,
+          ),
+        ),
+        IconButton(
+          onPressed: () {
+            _imageStreamToggle();
+          },
+          color: Colors.white,
+          iconSize: ScreenUtil().setWidth(30.0),
+          icon: const Icon(
+            Icons.filter_center_focus,
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildCameraPreview() {
     if (_cameraController == null || !_cameraController.value.isInitialized) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return Container(
+        color: Colors.black,
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
       );
     }
     return Column(
