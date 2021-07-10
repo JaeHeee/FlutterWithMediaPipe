@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_with_mediapipe/pages/camera_page.dart';
 
 import '../constants/data.dart';
 
@@ -74,58 +75,72 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Container _buildModelCard(int index, double scale) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15.0),
-        image: DecorationImage(
-          image: AssetImage(items[index]['image']),
-          fit: BoxFit.cover,
+  InkWell _buildModelCard(int index, double scale) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) {
+              return CameraPage(
+                title: items[index]['title'],
+              );
+            },
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15.0),
+          image: DecorationImage(
+            image: AssetImage(items[index]['image']),
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
-      margin: EdgeInsets.symmetric(
-        horizontal: ScreenUtil().setWidth(10.0),
-        vertical: ScreenUtil().setHeight(30.0) * scale,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(15.0),
-                bottomRight: Radius.circular(15.0),
+        margin: EdgeInsets.symmetric(
+          horizontal: ScreenUtil().setWidth(10.0),
+          vertical: ScreenUtil().setHeight(30.0) * scale,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(15.0),
+                  bottomRight: Radius.circular(15.0),
+                ),
+              ),
+              padding: EdgeInsets.all(ScreenUtil().setWidth(16.0)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    items[index]['title'],
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: ScreenUtil().setSp(20.0),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(
+                    height: ScreenUtil().setHeight(8.0),
+                  ),
+                  Text(
+                    items[index]['text'],
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: ScreenUtil().setSp(12.0),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
-            padding: EdgeInsets.all(ScreenUtil().setWidth(16.0)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  items[index]['title'],
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: ScreenUtil().setSp(20.0),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(
-                  height: ScreenUtil().setHeight(8.0),
-                ),
-                Text(
-                  items[index]['text'],
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: ScreenUtil().setSp(12.0),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
