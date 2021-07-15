@@ -1,10 +1,10 @@
-const items = [
+const models = [
   {
     'title': 'Face Detection',
     'text':
         'MediaPipe Face Detection is an ultrafast face detection solution that comes with 6 landmarks and multi-face support. It is based on BlazeFace, a lightweight and well-performing face detector tailored for mobile GPU inference.',
     'image': 'assets/images/architecture.jpg',
-    'model': 'models/face_detection_full_range_sparse.tflite',
+    'model': 'models/face_detection_short_range.tflite',
   },
   {
     'title': 'Face Mesh',

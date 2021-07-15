@@ -65,7 +65,7 @@ class _HomePageState extends State<HomePage> {
         child: PageView.builder(
           controller: _pageController,
           physics: const BouncingScrollPhysics(),
-          itemCount: items.length,
+          itemCount: models.length,
           itemBuilder: (context, index) {
             var scale = (_currentPageValue - index).abs();
             return _buildModelCard(index, scale);
@@ -83,7 +83,7 @@ class _HomePageState extends State<HomePage> {
           MaterialPageRoute(
             builder: (context) {
               return CameraPage(
-                title: items[index]['title'],
+                title: models[index]['title'],
               );
             },
           ),
@@ -93,7 +93,7 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15.0),
           image: DecorationImage(
-            image: AssetImage(items[index]['image']),
+            image: AssetImage(models[index]['image']),
             fit: BoxFit.cover,
           ),
         ),
@@ -118,7 +118,7 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    items[index]['title'],
+                    models[index]['title'],
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: ScreenUtil().setSp(20.0),
@@ -129,7 +129,7 @@ class _HomePageState extends State<HomePage> {
                     height: ScreenUtil().setHeight(8.0),
                   ),
                   Text(
-                    items[index]['text'],
+                    models[index]['text'],
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: ScreenUtil().setSp(12.0),
@@ -150,7 +150,7 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         image: DecorationImage(
           image: AssetImage(
-            items[_currentPageValue.round()]['image'],
+            models[_currentPageValue.round()]['image'],
           ),
           fit: BoxFit.cover,
         ),

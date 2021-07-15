@@ -1,6 +1,11 @@
+import 'dart:isolate';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import '../services/face_detection/face_detection_service.dart';
+import '../utils/isolate_utils.dart';
 
 class CameraPage extends StatefulWidget {
   const CameraPage({
@@ -18,14 +23,32 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   CameraController _cameraController;
   List<CameraDescription> _cameras;
   CameraDescription _cameraDescription;
-  CameraImage _cameraImage;
+
   bool _isRun;
+  bool _predicting = false;
+  bool _draw = false;
+  Rect _bbox;
+
+  FaceDetection _faceDetection;
+  IsolateUtils _isolateUtils;
 
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
-    initCamera();
+    initStateAsync();
     super.initState();
+  }
+
+  void initStateAsync() async {
+    WidgetsBinding.instance.addObserver(this);
+
+    _isolateUtils = IsolateUtils();
+    await _isolateUtils.start();
+
+    await initCamera();
+
+    _faceDetection = FaceDetection();
+    _predicting = false;
   }
 
   @override
@@ -60,7 +83,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
   void onNewCameraSelected(CameraDescription cameraDescription) async {
     if (_cameraController != null) {
-      await _cameraController.dispose();
+      // await _cameraController.dispose();
     }
 
     _cameraController = CameraController(
@@ -93,9 +116,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   void _imageStreamToggle() {
     _isRun = !_isRun;
     if (_isRun) {
-      _cameraController.startImageStream((imageStream) {
-        _cameraImage = imageStream;
-      });
+      _cameraController.startImageStream(onLatestImageAvailable);
     } else {
       _cameraController.stopImageStream();
     }
@@ -143,6 +164,9 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
         IconButton(
           onPressed: () {
             _cameraDirectionToggle();
+            setState(() {
+              _draw = false;
+            });
           },
           color: Colors.white,
           iconSize: ScreenUtil().setWidth(30.0),
@@ -153,6 +177,9 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
         IconButton(
           onPressed: () {
             _imageStreamToggle();
+            setState(() {
+              _draw = !_draw;
+            });
           },
           color: Colors.white,
           iconSize: ScreenUtil().setWidth(30.0),
@@ -173,13 +200,38 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
         ),
       );
     }
-    return Column(
+    return Stack(
       children: [
-        Expanded(
-          child: CameraPreview(_cameraController),
+        Column(
+          children: [
+            Expanded(
+              child: CameraPreview(_cameraController),
+            ),
+          ],
         ),
+        _drawBoundingBox(),
       ],
     );
+  }
+
+  Widget _drawBoundingBox() {
+    final screenSize = MediaQuery.of(context).size;
+    var ratio = screenSize.width / _cameraController.value.previewSize.height;
+
+    Color color = Colors.primaries[0];
+    if (_bbox == null || !_draw) {
+      return Container();
+    } else {
+      return Positioned(
+          left: ratio * _bbox.left,
+          top: ratio * _bbox.top,
+          width: ratio * _bbox.width,
+          height: ratio * _bbox.height,
+          child: Container(
+              decoration: BoxDecoration(
+            border: Border.all(color: color, width: 3),
+          )));
+    }
   }
 
   AppBar _buildAppBar() {
@@ -192,5 +244,40 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
             fontWeight: FontWeight.bold),
       ),
     );
+  }
+
+  Future<void> onLatestImageAvailable(CameraImage cameraImage) async {
+    if (_faceDetection.interpreter != null) {
+      // If previous inference has not completed then return
+      if (_predicting || !_draw) {
+        return;
+      }
+
+      setState(() {
+        _predicting = true;
+      });
+
+      if (_draw) {
+        var isolateData = IsolateData(
+          cameraImage,
+          _faceDetection.interpreter.address,
+        );
+        var inferenceResults = await inference(isolateData);
+
+        _bbox = inferenceResults == null ? null : inferenceResults['bbox'];
+      }
+
+      setState(() {
+        _predicting = false;
+      });
+    }
+  }
+
+  Future<Map<String, dynamic>> inference(IsolateData isolateData) async {
+    var responsePort = ReceivePort();
+    _isolateUtils.sendPort
+        .send(isolateData..responsePort = responsePort.sendPort);
+    var results = await responsePort.first;
+    return results;
   }
 }
