@@ -153,8 +153,6 @@ class FaceDetection {
 
         bbox = _imageProcessor.inverseTransformRect(
             bbox, image.height, image.width);
-
-        bbox = bbox.translate(0, image.height * 0.1);
       }
       rectFaces.add({'bbox': bbox, 'score': score});
     }

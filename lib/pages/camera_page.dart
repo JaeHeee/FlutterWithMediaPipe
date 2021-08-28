@@ -158,7 +158,6 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
       },
       child: Scaffold(
         backgroundColor: Colors.black,
-        extendBodyBehindAppBar: true,
         appBar: _buildAppBar(),
         body: _buildCameraPreview(),
         floatingActionButton: _buildFloatingActionButton(),
@@ -210,15 +209,10 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
         ),
       );
     }
+
     return Stack(
       children: [
-        Column(
-          children: [
-            Expanded(
-              child: CameraPreview(_cameraController),
-            ),
-          ],
-        ),
+        CameraPreview(_cameraController),
         _drawBoundingBox(),
       ],
     );
