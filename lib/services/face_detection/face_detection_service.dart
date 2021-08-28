@@ -1,11 +1,9 @@
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:image/image.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
 
-import '../../utils/gpu_delegate.dart';
 import 'anchors.dart';
 import 'generate_anchors.dart';
 import 'non_maximum_suppression.dart';
@@ -68,13 +66,7 @@ class FaceDetection {
 
   void _loadModel({Interpreter interpreter}) async {
     try {
-      if (Platform.isAndroid) {
-        _interpreterOptions = InterpreterOptions()
-          ..addDelegate(GpuDelegateSetting.gpuDelegateV2);
-      } else {
-        _interpreterOptions = InterpreterOptions()
-          ..addDelegate(GpuDelegateSetting.gpuDelegate);
-      }
+      _interpreterOptions = InterpreterOptions();
 
       _anchors = generateAnchors(anchors);
       _interpreter = interpreter ??
