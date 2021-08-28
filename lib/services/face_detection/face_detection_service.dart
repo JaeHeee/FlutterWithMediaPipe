@@ -1,6 +1,7 @@
+import 'dart:io';
 import 'dart:ui';
 
-import 'package:image/image.dart';
+import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
 
@@ -14,7 +15,7 @@ class FaceDetection {
   static const String MODEL_FILE_NAME =
       'models/face_detection_short_range.tflite';
   static const int INPUT_SIZE = 128;
-  static const double THRESHOLD = 0.8;
+  static const double THRESHOLD = 0.7;
 
   InterpreterOptions _interpreterOptions;
   Interpreter _interpreter;
@@ -70,8 +71,10 @@ class FaceDetection {
 
       _anchors = generateAnchors(anchors);
       _interpreter = interpreter ??
-          await Interpreter.fromAsset(MODEL_FILE_NAME,
-              options: _interpreterOptions);
+          await Interpreter.fromAsset(
+            MODEL_FILE_NAME,
+            options: _interpreterOptions,
+          );
 
       var outputTensors = _interpreter.getOutputTensors();
       _outputShapes = [];
@@ -95,14 +98,19 @@ class FaceDetection {
     return inputImage;
   }
 
-  Map<String, dynamic> predict(Image image) {
+  Map<String, dynamic> predict(image_lib.Image image) {
     if (_interpreter == null) {
       print('Interpreter not initialized');
       return null;
     }
 
-    var inputImage = TensorImage.fromImage(image);
-    inputImage = _getProcessedImage(inputImage);
+    if (Platform.isAndroid) {
+      image = image_lib.copyRotate(image, -90);
+      image = image_lib.flipHorizontal(image);
+    }
+    var tensorImage = TensorImage(TfLiteType.float32);
+    tensorImage.loadImage(image);
+    var inputImage = _getProcessedImage(tensorImage);
 
     TensorBuffer outputFaces = TensorBufferFloat(_outputShapes[0]);
     TensorBuffer outputScores = TensorBufferFloat(_outputShapes[1]);
@@ -145,7 +153,8 @@ class FaceDetection {
 
         bbox = _imageProcessor.inverseTransformRect(
             bbox, image.height, image.width);
-        bbox = bbox.translate(0, image.height * 0.2);
+
+        bbox = bbox.translate(0, image.height * 0.1);
       }
       rectFaces.add({'bbox': bbox, 'score': score});
     }

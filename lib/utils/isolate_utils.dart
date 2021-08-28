@@ -1,8 +1,6 @@
-import 'dart:io';
 import 'dart:isolate';
 
 import 'package:camera/camera.dart';
-import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 import '../services/face_detection/face_detection_service.dart';
@@ -41,11 +39,9 @@ class IsolateUtils {
         );
 
         var image = ImageUtils.convertCameraImage(isolateData.cameraImage);
-        if (Platform.isAndroid) {
-          image = image_lib.copyRotate(image, 90);
-        }
 
         var results = faceDetection.predict(image);
+
         isolateData.responsePort.send(results);
       }
     }
