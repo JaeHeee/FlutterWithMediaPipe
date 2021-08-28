@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../services/face_detection/face_detection_service.dart';
+
 import '../utils/isolate_utils.dart';
 
 class CameraPage extends StatefulWidget {
@@ -30,6 +31,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   Rect _bbox;
 
   FaceDetection _faceDetection;
+
   IsolateUtils _isolateUtils;
 
   @override
@@ -48,6 +50,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     await initCamera();
 
     _faceDetection = FaceDetection();
+
     _predicting = false;
   }
 
@@ -147,13 +150,20 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   // Widget
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(),
-      body: _buildCameraPreview(),
-      floatingActionButton: _buildFloatingActionButton(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    return WillPopScope(
+      onWillPop: () async {
+        _imageStreamToggle();
+        Navigator.pop(context);
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        extendBodyBehindAppBar: true,
+        appBar: _buildAppBar(),
+        body: _buildCameraPreview(),
+        floatingActionButton: _buildFloatingActionButton(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      ),
     );
   }
 
@@ -248,7 +258,6 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
   Future<void> onLatestImageAvailable(CameraImage cameraImage) async {
     if (_faceDetection.interpreter != null) {
-      // If previous inference has not completed then return
       if (_predicting || !_draw) {
         return;
       }
