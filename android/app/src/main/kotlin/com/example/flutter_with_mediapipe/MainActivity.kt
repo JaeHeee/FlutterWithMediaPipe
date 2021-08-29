@@ -1,4 +1,4 @@
-package com.example.flutter_with_mediapipe
+package com.jdev.fmediapipe
 
 import io.flutter.embedding.android.FlutterActivity
 
