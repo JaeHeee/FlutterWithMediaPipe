@@ -84,6 +84,7 @@ class _HomePageState extends State<HomePage> {
             builder: (context) {
               return CameraPage(
                 title: models[index]['title'],
+                modelName: models[index]['model'],
               );
             },
           ),

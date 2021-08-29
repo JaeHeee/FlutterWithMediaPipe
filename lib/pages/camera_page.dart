@@ -1,8 +1,15 @@
 import 'dart:isolate';
+import 'dart:ui';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_with_mediapipe/services/face_mesh/face_mesh_painter.dart';
+import 'package:flutter_with_mediapipe/services/face_mesh/face_mesh_service.dart';
+import 'package:flutter_with_mediapipe/services/hands/hands_painter.dart';
+import 'package:flutter_with_mediapipe/services/hands/hands_service.dart';
+import 'package:flutter_with_mediapipe/services/pose/pose_painter.dart';
+import 'package:flutter_with_mediapipe/services/pose/pose_service.dart';
 
 import '../services/face_detection/face_detection_service.dart';
 
@@ -11,10 +18,12 @@ import '../utils/isolate_utils.dart';
 class CameraPage extends StatefulWidget {
   const CameraPage({
     @required this.title,
+    @required this.modelName,
     Key key,
   }) : super(key: key);
 
   final String title;
+  final String modelName;
 
   @override
   _CameraPageState createState() => _CameraPageState();
@@ -28,9 +37,17 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   bool _isRun;
   bool _predicting = false;
   bool _draw = false;
+  double _ratio;
+  Size _screenSize;
   Rect _bbox;
+  List<Offset> _faceLandmarks;
+  List<Offset> _handLandmarks;
+  List<Offset> _poseLandmarks;
 
   FaceDetection _faceDetection;
+  FaceMesh _faceMesh;
+  Hands _hands;
+  Pose _pose;
 
   IsolateUtils _isolateUtils;
 
@@ -49,7 +66,20 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
     await initCamera();
 
-    _faceDetection = FaceDetection();
+    switch (widget.modelName) {
+      case 'face_detection':
+        _faceDetection = FaceDetection();
+        break;
+      case 'face_mesh':
+        _faceMesh = FaceMesh();
+        break;
+      case 'hands':
+        _hands = Hands();
+        break;
+      case 'pose_landmark':
+        _pose = Pose();
+        break;
+    }
 
     _predicting = false;
   }
@@ -150,6 +180,8 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   // Widget
   @override
   Widget build(BuildContext context) {
+    _screenSize = MediaQuery.of(context).size;
+
     return WillPopScope(
       onWillPop: () async {
         _imageStreamToggle();
@@ -210,31 +242,72 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
       );
     }
 
+    _ratio = _screenSize.width / _cameraController.value.previewSize.height;
+
     return Stack(
       children: [
         CameraPreview(_cameraController),
         _drawBoundingBox(),
+        _drawLandmarks(),
+        _drawHands(),
+        _drawPose(),
       ],
     );
   }
 
   Widget _drawBoundingBox() {
-    final screenSize = MediaQuery.of(context).size;
-    var ratio = screenSize.width / _cameraController.value.previewSize.height;
-
     Color color = Colors.primaries[0];
     if (_bbox == null || !_draw) {
       return Container();
     } else {
       return Positioned(
-          left: ratio * _bbox.left,
-          top: ratio * _bbox.top,
-          width: ratio * _bbox.width,
-          height: ratio * _bbox.height,
+          left: _ratio * _bbox.left,
+          top: _ratio * _bbox.top,
+          width: _ratio * _bbox.width,
+          height: _ratio * _bbox.height,
           child: Container(
               decoration: BoxDecoration(
             border: Border.all(color: color, width: 3),
           )));
+    }
+  }
+
+  Widget _drawLandmarks() {
+    if (_faceLandmarks == null || !_draw) {
+      return Container();
+    } else {
+      return CustomPaint(
+        painter: FaceMeshPainter(
+          points: _faceLandmarks,
+          ratio: _ratio,
+        ),
+      );
+    }
+  }
+
+  Widget _drawHands() {
+    if (_handLandmarks == null || !_draw) {
+      return Container();
+    } else {
+      return CustomPaint(
+        painter: HandsPainter(
+          points: _handLandmarks,
+          ratio: _ratio,
+        ),
+      );
+    }
+  }
+
+  Widget _drawPose() {
+    if (_poseLandmarks == null || !_draw) {
+      return Container();
+    } else {
+      return CustomPaint(
+        painter: PosePainter(
+          points: _poseLandmarks,
+          ratio: _ratio,
+        ),
+      );
     }
   }
 
@@ -251,7 +324,39 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   }
 
   Future<void> onLatestImageAvailable(CameraImage cameraImage) async {
-    if (_faceDetection.interpreter != null) {
+    switch (widget.modelName) {
+      case 'face_detection':
+        await _inference(
+          model: _faceDetection,
+          cameraImage: cameraImage,
+        );
+        break;
+      case 'face_mesh':
+        await _inference(
+          model: _faceMesh,
+          cameraImage: cameraImage,
+        );
+        break;
+      case 'hands':
+        await _inference(
+          model: _hands,
+          cameraImage: cameraImage,
+        );
+        break;
+      case 'pose_landmark':
+        await _inference(
+          model: _pose,
+          cameraImage: cameraImage,
+        );
+        break;
+    }
+  }
+
+  Future<void> _inference({
+    dynamic model,
+    CameraImage cameraImage,
+  }) async {
+    if (model.interpreter != null) {
       if (_predicting || !_draw) {
         return;
       }
@@ -263,11 +368,29 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
       if (_draw) {
         var isolateData = IsolateData(
           cameraImage,
-          _faceDetection.interpreter.address,
+          model.interpreter.address,
+          widget.modelName,
         );
-        var inferenceResults = await inference(isolateData);
+        var inferenceResults = await _sendPort(isolateData);
 
-        _bbox = inferenceResults == null ? null : inferenceResults['bbox'];
+        switch (widget.modelName) {
+          case 'face_detection':
+            _bbox = inferenceResults == null ? null : inferenceResults['bbox'];
+
+            break;
+          case 'face_mesh':
+            _faceLandmarks =
+                inferenceResults == null ? null : inferenceResults['point'];
+            break;
+          case 'hands':
+            _handLandmarks =
+                inferenceResults == null ? null : inferenceResults['point'];
+            break;
+          case 'pose_landmark':
+            _poseLandmarks =
+                inferenceResults == null ? null : inferenceResults['point'];
+            break;
+        }
       }
 
       setState(() {
@@ -276,7 +399,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     }
   }
 
-  Future<Map<String, dynamic>> inference(IsolateData isolateData) async {
+  Future<Map<String, dynamic>> _sendPort(IsolateData isolateData) async {
     var responsePort = ReceivePort();
     _isolateUtils.sendPort
         .send(isolateData..responsePort = responsePort.sendPort);
