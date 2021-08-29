@@ -39,6 +39,7 @@ class _HomePageState extends State<HomePage> {
 
   AppBar _buildAppBar() {
     return AppBar(
+      centerTitle: true,
       title: Text(
         'Select Your Model',
         style: TextStyle(
@@ -121,7 +122,7 @@ class _HomePageState extends State<HomePage> {
                   Text(
                     models[index]['title'],
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.grey,
                       fontSize: ScreenUtil().setSp(20.0),
                       fontWeight: FontWeight.bold,
                     ),
@@ -132,7 +133,7 @@ class _HomePageState extends State<HomePage> {
                   Text(
                     models[index]['text'],
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.grey,
                       fontSize: ScreenUtil().setSp(12.0),
                       fontWeight: FontWeight.bold,
                     ),
