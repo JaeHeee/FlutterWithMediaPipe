@@ -40,6 +40,7 @@ This is Flutter project using MediaPipe ML models.
 ## MediaPipe
 
 ![mediapipe](assets/images/mediapipe.png)
+<br>
 MediaPipe offers cross-platform, customizable ML solutions for live and streaming media.
 #### [mediapipe.dev](https://mediapipe.dev/)
 #### [mediapipe code](https://github.com/google/mediapipe)
