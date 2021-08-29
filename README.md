@@ -1,16 +1,55 @@
-# flutter_with_mediapipe
+# <p align="center"> Flutter Pipe </p>
 
-A new Flutter project.
+![platform-ios](https://img.shields.io/badge/platform-ios%20%7C%20android-lightgrey)
 
-## Getting Started
+<br>
+<br>
 
-This project is a starting point for a Flutter application.
+## <p align="center"> 🌟 Flutter with MediaPipe Project 🌟 </p>
+<br>
+<br>
+<br>
 
-A few resources to get you started if this is your first Flutter project:
+This is Flutter project using MediaPipe ML models.
+| Face Detection | Face Mesh |
+| :----: | :----: |
+| <img src="assets/images/smile_blue.png"> | <img src="assets/images/smile_yellow.png"> |
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+| Hand Detection | Pose Estimation |
+| :----: | :----: |
+| <img src="assets/images/hand_green.png"> | <img src="assets/images/pose_red.png"> |
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+<br>
+<br>
+<br>
+
+## Features
+-----
+- Detect face on real-time
+- Detect face landmark on real-time
+- Detect hand on real-time
+- Estimate body pose on real-time
+- Visualize inference results
+
+
+<br>
+<br>
+<br>
+
+
+## MediaPipe
+-----
+![result_1](assets/images/mediapipe.png)
+#### [mediapipe.dev](https://mediapipe.dev/)
+#### [mediapipe code](https://github.com/google/mediapipe)
+
+
+<br>
+<br>
+<br>
+
+## App Store & Play Store
+-----
+
+#### [App Store](https://github.com/JaeHeee/FlutterWithMediaPipe)
+#### [Play Store](https://github.com/JaeHeee/FlutterWithMediaPipe)
