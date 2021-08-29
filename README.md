@@ -24,7 +24,7 @@ This is Flutter project using MediaPipe ML models.
 <br>
 
 ## Features
------
+
 - Detect face on real-time
 - Detect face landmark on real-time
 - Detect hand on real-time
@@ -38,7 +38,7 @@ This is Flutter project using MediaPipe ML models.
 
 
 ## MediaPipe
------
+
 ![result_1](assets/images/mediapipe.png)
 #### [mediapipe.dev](https://mediapipe.dev/)
 #### [mediapipe code](https://github.com/google/mediapipe)
@@ -49,7 +49,7 @@ This is Flutter project using MediaPipe ML models.
 <br>
 
 ## App Store & Play Store
------
+
 
 #### [App Store](https://github.com/JaeHeee/FlutterWithMediaPipe)
 #### [Play Store](https://github.com/JaeHeee/FlutterWithMediaPipe)
