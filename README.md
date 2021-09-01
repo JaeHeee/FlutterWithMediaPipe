@@ -53,5 +53,5 @@ MediaPipe offers cross-platform, customizable ML solutions for live and streamin
 ## App Store & Play Store
 
 
-#### [App Store](https://github.com/JaeHeee/FlutterWithMediaPipe)
+#### [App Store](https://apps.apple.com/us/app/flutter-pipe/id1583450010)
 #### [Play Store](https://github.com/JaeHeee/FlutterWithMediaPipe)
