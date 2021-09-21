@@ -1,95 +1,65 @@
 import 'dart:isolate';
 
-import 'package:camera/camera.dart';
-import 'package:flutter_with_mediapipe/services/face_detection/face_detection_service.dart';
-import 'package:flutter_with_mediapipe/services/hands/hands_service.dart';
-import 'package:flutter_with_mediapipe/services/pose/pose_service.dart';
-import 'package:tflite_flutter/tflite_flutter.dart';
+import 'package:flutter/material.dart';
 
-import '../services/face_mesh/face_mesh_service.dart';
-import 'image_utils.dart';
-
-/// Manages separate Isolate instance for inference
 class IsolateUtils {
-  static const String DEBUG_NAME = 'InferenceIsolate';
-
-  final ReceivePort _receivePort = ReceivePort();
-
   Isolate _isolate;
   SendPort _sendPort;
+  ReceivePort _receivePort;
 
   SendPort get sendPort => _sendPort;
-  Isolate get isolate => _isolate;
 
-  Future<void> start() async {
+  Future<void> initIsolate() async {
+    _receivePort = ReceivePort();
     _isolate = await Isolate.spawn<SendPort>(
-      entryPoint,
+      _entryPoint,
       _receivePort.sendPort,
-      debugName: DEBUG_NAME,
     );
 
     _sendPort = await _receivePort.first;
   }
 
-  static void entryPoint(SendPort sendPort) async {
-    final port = ReceivePort();
-    sendPort.send(port.sendPort);
+  static void _entryPoint(SendPort mainSendPort) async {
+    final childReceivePort = ReceivePort();
+    mainSendPort.send(childReceivePort.sendPort);
 
-    await for (final IsolateData isolateData in port) {
+    await for (final _IsolateData isolateData in childReceivePort) {
       if (isolateData != null) {
-        var results = _predict(
-          modelName: isolateData.model,
-          isolateData: isolateData,
-        );
-
+        final results = isolateData.handler(isolateData.params);
         isolateData.responsePort.send(results);
       }
     }
   }
 
-  static Map<String, dynamic> _predict({
-    String modelName,
-    IsolateData isolateData,
+  void sendMessage({
+    @required Function handler,
+    @required Map<String, dynamic> params,
+    @required SendPort sendPort,
+    @required ReceivePort responsePort,
   }) {
-    var model;
-    switch (modelName) {
-      case 'face_detection':
-        model = FaceDetection(
-          interpreter: Interpreter.fromAddress(isolateData.interpreterAddress),
-        );
-        break;
-      case 'face_mesh':
-        model = FaceMesh(
-          interpreter: Interpreter.fromAddress(isolateData.interpreterAddress),
-        );
-        break;
-      case 'hands':
-        model = Hands(
-          interpreter: Interpreter.fromAddress(isolateData.interpreterAddress),
-        );
-        break;
-      case 'pose_landmark':
-        model = Pose(
-          interpreter: Interpreter.fromAddress(isolateData.interpreterAddress),
-        );
-        break;
-    }
-    var image = ImageUtils.convertCameraImage(isolateData.cameraImage);
-    var results = model.predict(image);
+    final isolateData = _IsolateData(
+      handler: handler,
+      params: params,
+      responsePort: responsePort.sendPort,
+    );
+    sendPort.send(isolateData);
+  }
 
-    return results;
+  void dispose() {
+    _receivePort.close();
+    _isolate.kill(priority: Isolate.immediate);
+    _isolate = null;
   }
 }
 
-class IsolateData {
-  CameraImage cameraImage;
-  int interpreterAddress;
-  String model;
+class _IsolateData {
+  Function handler;
+  Map<String, dynamic> params;
   SendPort responsePort;
 
-  IsolateData(
-    this.cameraImage,
-    this.interpreterAddress,
-    this.model,
-  );
+  _IsolateData({
+    @required this.handler,
+    @required this.params,
+    @required this.responsePort,
+  });
 }

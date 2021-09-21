@@ -5,6 +5,7 @@ import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
 
+import '../../utils/image_utils.dart';
 import 'anchors.dart';
 import 'generate_anchors.dart';
 import 'non_maximum_suppression.dart';
@@ -60,6 +61,7 @@ class FaceDetection {
   List<Anchor> _anchors;
 
   Interpreter get interpreter => _interpreter;
+  int get getAddress => _interpreter.address;
 
   FaceDetection({Interpreter interpreter}) {
     _loadModel(interpreter: interpreter);
@@ -76,7 +78,7 @@ class FaceDetection {
             options: _interpreterOptions,
           );
 
-      var outputTensors = _interpreter.getOutputTensors();
+      final outputTensors = _interpreter.getOutputTensors();
       _outputShapes = [];
       _outputTypes = [];
       outputTensors.forEach((tensor) {
@@ -98,7 +100,7 @@ class FaceDetection {
     return inputImage;
   }
 
-  Map<String, dynamic> predict(image_lib.Image image) {
+  Map<String, dynamic> _predict(image_lib.Image image) {
     if (_interpreter == null) {
       print('Interpreter not initialized');
       return null;
@@ -108,16 +110,16 @@ class FaceDetection {
       image = image_lib.copyRotate(image, -90);
       image = image_lib.flipHorizontal(image);
     }
-    var tensorImage = TensorImage(TfLiteType.float32);
+    final tensorImage = TensorImage(TfLiteType.float32);
     tensorImage.loadImage(image);
-    var inputImage = _getProcessedImage(tensorImage);
+    final inputImage = _getProcessedImage(tensorImage);
 
     TensorBuffer outputFaces = TensorBufferFloat(_outputShapes[0]);
     TensorBuffer outputScores = TensorBufferFloat(_outputShapes[1]);
 
-    var inputs = <Object>[inputImage.buffer];
+    final inputs = <Object>[inputImage.buffer];
 
-    var outputs = <int, Object>{
+    final outputs = <int, Object>{
       0: outputFaces.buffer,
       1: outputScores.buffer,
     };
@@ -125,8 +127,8 @@ class FaceDetection {
     // run inference
     _interpreter.runForMultipleInputs(inputs, outputs);
 
-    var rawBoxes = outputFaces.getDoubleList();
-    var rawScores = outputScores.getDoubleList();
+    final rawBoxes = outputFaces.getDoubleList();
+    final rawScores = outputScores.getDoubleList();
     var detections = process(
         options: options,
         rawScores: rawScores,
@@ -138,11 +140,11 @@ class FaceDetection {
       return null;
     }
 
-    var rectFaces = <Map<String, dynamic>>[];
+    final rectFaces = <Map<String, dynamic>>[];
 
     for (var detection in detections) {
       Rect bbox;
-      var score = detection.score;
+      final score = detection.score;
       if (score > THRESHOLD) {
         bbox = Rect.fromLTRB(
           inputImage.width * detection.xMin,
@@ -160,4 +162,14 @@ class FaceDetection {
 
     return rectFaces[0];
   }
+}
+
+Map<String, dynamic> runFaceDetector(Map<String, dynamic> params) {
+  final faceDetection = FaceDetection(
+      interpreter: Interpreter.fromAddress(params['detectorAddress']));
+
+  final image = ImageUtils.convertCameraImage(params['cameraImage']);
+  final result = faceDetection._predict(image);
+
+  return result;
 }

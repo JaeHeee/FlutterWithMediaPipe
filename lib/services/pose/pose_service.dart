@@ -5,6 +5,8 @@ import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
 
+import '../../utils/image_utils.dart';
+
 class Pose {
   static const String MODEL_FILE_NAME = 'models/pose_landmark_full.tflite';
   static const int INPUT_SIZE = 256;
@@ -18,6 +20,7 @@ class Pose {
   List<TfLiteType> _outputTypes;
 
   Interpreter get interpreter => _interpreter;
+  int get getAddress => _interpreter.address;
 
   Pose({Interpreter interpreter}) {
     _loadModel(interpreter: interpreter);
@@ -31,7 +34,7 @@ class Pose {
           await Interpreter.fromAsset(MODEL_FILE_NAME,
               options: _interpreterOptions);
 
-      var outputTensors = _interpreter.getOutputTensors();
+      final outputTensors = _interpreter.getOutputTensors();
       _outputShapes = [];
       _outputTypes = [];
       outputTensors.forEach((tensor) {
@@ -53,7 +56,7 @@ class Pose {
     return inputImage;
   }
 
-  Map<String, dynamic> predict(image_lib.Image image) {
+  Map<String, dynamic> _predict(image_lib.Image image) {
     if (_interpreter == null) {
       print('Interpreter not initialized');
       return null;
@@ -63,9 +66,9 @@ class Pose {
       image = image_lib.copyRotate(image, -90);
       image = image_lib.flipHorizontal(image);
     }
-    var tensorImage = TensorImage(TfLiteType.float32);
+    final tensorImage = TensorImage(TfLiteType.float32);
     tensorImage.loadImage(image);
-    var inputImage = _getProcessedImage(tensorImage);
+    final inputImage = _getProcessedImage(tensorImage);
 
     TensorBuffer outputLandmarks = TensorBufferFloat(_outputShapes[0]);
     TensorBuffer outputIdentity1 = TensorBufferFloat(_outputShapes[1]);
@@ -73,9 +76,9 @@ class Pose {
     TensorBuffer outputIdentity3 = TensorBufferFloat(_outputShapes[3]);
     TensorBuffer outputIdentity4 = TensorBufferFloat(_outputShapes[4]);
 
-    var inputs = <Object>[inputImage.buffer];
+    final inputs = <Object>[inputImage.buffer];
 
-    var outputs = <int, Object>{
+    final outputs = <int, Object>{
       0: outputLandmarks.buffer,
       1: outputIdentity1.buffer,
       2: outputIdentity2.buffer,
@@ -89,8 +92,8 @@ class Pose {
       return null;
     }
 
-    var landmarkPoints = outputLandmarks.getDoubleList().reshape([39, 5]);
-    var landmarkResults = <Offset>[];
+    final landmarkPoints = outputLandmarks.getDoubleList().reshape([39, 5]);
+    final landmarkResults = <Offset>[];
 
     for (var point in landmarkPoints) {
       landmarkResults.add(Offset(
@@ -101,4 +104,14 @@ class Pose {
 
     return {'point': landmarkResults};
   }
+}
+
+Map<String, dynamic> runPoseEstimator(Map<String, dynamic> params) {
+  final faceDetection =
+      Pose(interpreter: Interpreter.fromAddress(params['detectorAddress']));
+
+  final image = ImageUtils.convertCameraImage(params['cameraImage']);
+  final result = faceDetection._predict(image);
+
+  return result;
 }

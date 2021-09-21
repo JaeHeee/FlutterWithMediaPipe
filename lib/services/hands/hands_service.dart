@@ -5,6 +5,8 @@ import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
 
+import '../../utils/image_utils.dart';
+
 class Hands {
   static const String MODEL_FILE_NAME = 'models/hand_landmark.tflite';
   static const int INPUT_SIZE = 224;
@@ -19,6 +21,7 @@ class Hands {
   List<TfLiteType> _outputTypes;
 
   Interpreter get interpreter => _interpreter;
+  int get getAddress => _interpreter.address;
 
   Hands({Interpreter interpreter}) {
     _loadModel(interpreter: interpreter);
@@ -32,7 +35,7 @@ class Hands {
           await Interpreter.fromAsset(MODEL_FILE_NAME,
               options: _interpreterOptions);
 
-      var outputTensors = _interpreter.getOutputTensors();
+      final outputTensors = _interpreter.getOutputTensors();
       _outputShapes = [];
       _outputTypes = [];
       outputTensors.forEach((tensor) {
@@ -54,7 +57,7 @@ class Hands {
     return inputImage;
   }
 
-  Map<String, dynamic> predict(image_lib.Image image) {
+  Map<String, dynamic> _predict(image_lib.Image image) {
     if (_interpreter == null) {
       print('Interpreter not initialized');
       return null;
@@ -64,17 +67,17 @@ class Hands {
       image = image_lib.copyRotate(image, -90);
       image = image_lib.flipHorizontal(image);
     }
-    var tensorImage = TensorImage(TfLiteType.float32);
+    final tensorImage = TensorImage(TfLiteType.float32);
     tensorImage.loadImage(image);
-    var inputImage = _getProcessedImage(tensorImage);
+    final inputImage = _getProcessedImage(tensorImage);
 
     TensorBuffer outputLandmarks = TensorBufferFloat(_outputShapes[0]);
     TensorBuffer outputExist = TensorBufferFloat(_outputShapes[1]);
     TensorBuffer outputScores = TensorBufferFloat(_outputShapes[2]);
 
-    var inputs = <Object>[inputImage.buffer];
+    final inputs = <Object>[inputImage.buffer];
 
-    var outputs = <int, Object>{
+    final outputs = <int, Object>{
       0: outputLandmarks.buffer,
       1: outputExist.buffer,
       2: outputScores.buffer,
@@ -87,8 +90,8 @@ class Hands {
       return null;
     }
 
-    var landmarkPoints = outputLandmarks.getDoubleList().reshape([21, 3]);
-    var landmarkResults = <Offset>[];
+    final landmarkPoints = outputLandmarks.getDoubleList().reshape([21, 3]);
+    final landmarkResults = <Offset>[];
     for (var point in landmarkPoints) {
       landmarkResults.add(Offset(
         point[0] / INPUT_SIZE * image.width,
@@ -98,4 +101,14 @@ class Hands {
 
     return {'point': landmarkResults};
   }
+}
+
+Map<String, dynamic> runHandDetector(Map<String, dynamic> params) {
+  final faceDetection =
+      Hands(interpreter: Interpreter.fromAddress(params['detectorAddress']));
+
+  final image = ImageUtils.convertCameraImage(params['cameraImage']);
+  final result = faceDetection._predict(image);
+
+  return result;
 }

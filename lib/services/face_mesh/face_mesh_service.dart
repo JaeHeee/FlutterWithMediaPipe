@@ -5,6 +5,8 @@ import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
 
+import '../../utils/image_utils.dart';
+
 class FaceMesh {
   static const String MODEL_FILE_NAME = 'models/face_landmark.tflite';
   static const int INPUT_SIZE = 192;
@@ -17,6 +19,7 @@ class FaceMesh {
   List<TfLiteType> _outputTypes;
 
   Interpreter get interpreter => _interpreter;
+  int get getAddress => _interpreter.address;
 
   FaceMesh({Interpreter interpreter}) {
     _loadModel(interpreter: interpreter);
@@ -30,7 +33,7 @@ class FaceMesh {
           await Interpreter.fromAsset(MODEL_FILE_NAME,
               options: _interpreterOptions);
 
-      var outputTensors = _interpreter.getOutputTensors();
+      final outputTensors = _interpreter.getOutputTensors();
       _outputShapes = [];
       _outputTypes = [];
       outputTensors.forEach((tensor) {
@@ -52,7 +55,7 @@ class FaceMesh {
     return inputImage;
   }
 
-  Map<String, dynamic> predict(image_lib.Image image) {
+  Map<String, dynamic> _predict(image_lib.Image image) {
     if (_interpreter == null) {
       print('Interpreter not initialized');
       return null;
@@ -62,16 +65,16 @@ class FaceMesh {
       image = image_lib.copyRotate(image, -90);
       image = image_lib.flipHorizontal(image);
     }
-    var tensorImage = TensorImage(TfLiteType.float32);
+    final tensorImage = TensorImage(TfLiteType.float32);
     tensorImage.loadImage(image);
-    var inputImage = _getProcessedImage(tensorImage);
+    final inputImage = _getProcessedImage(tensorImage);
 
     TensorBuffer outputLandmarks = TensorBufferFloat(_outputShapes[0]);
     TensorBuffer outputScores = TensorBufferFloat(_outputShapes[1]);
 
-    var inputs = <Object>[inputImage.buffer];
+    final inputs = <Object>[inputImage.buffer];
 
-    var outputs = <int, Object>{
+    final outputs = <int, Object>{
       0: outputLandmarks.buffer,
       1: outputScores.buffer,
     };
@@ -82,8 +85,8 @@ class FaceMesh {
       return null;
     }
 
-    var landmarkPoints = outputLandmarks.getDoubleList().reshape([468, 3]);
-    var landmarkResults = <Offset>[];
+    final landmarkPoints = outputLandmarks.getDoubleList().reshape([468, 3]);
+    final landmarkResults = <Offset>[];
     for (var point in landmarkPoints) {
       landmarkResults.add(Offset(
         point[0] / INPUT_SIZE * image.width,
@@ -93,4 +96,14 @@ class FaceMesh {
 
     return {'point': landmarkResults};
   }
+}
+
+Map<String, dynamic> runFaceMesh(Map<String, dynamic> params) {
+  final faceDetection =
+      FaceMesh(interpreter: Interpreter.fromAddress(params['detectorAddress']));
+
+  final image = ImageUtils.convertCameraImage(params['cameraImage']);
+  final result = faceDetection._predict(image);
+
+  return result;
 }

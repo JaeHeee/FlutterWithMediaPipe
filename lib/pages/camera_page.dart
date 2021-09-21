@@ -4,15 +4,14 @@ import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_with_mediapipe/services/face_mesh/face_mesh_painter.dart';
-import 'package:flutter_with_mediapipe/services/face_mesh/face_mesh_service.dart';
-import 'package:flutter_with_mediapipe/services/hands/hands_painter.dart';
-import 'package:flutter_with_mediapipe/services/hands/hands_service.dart';
-import 'package:flutter_with_mediapipe/services/pose/pose_painter.dart';
-import 'package:flutter_with_mediapipe/services/pose/pose_service.dart';
 
 import '../services/face_detection/face_detection_service.dart';
-
+import '../services/face_mesh/face_mesh_painter.dart';
+import '../services/face_mesh/face_mesh_service.dart';
+import '../services/hands/hands_painter.dart';
+import '../services/hands/hands_service.dart';
+import '../services/pose/pose_painter.dart';
+import '../services/pose/pose_service.dart';
 import '../utils/isolate_utils.dart';
 
 class CameraPage extends StatefulWidget {
@@ -62,7 +61,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
 
     _isolateUtils = IsolateUtils();
-    await _isolateUtils.start();
+    await _isolateUtils.initIsolate();
 
     await initCamera();
 
@@ -103,6 +102,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _cameraController?.dispose();
     _cameraController = null;
+    _isolateUtils?.dispose();
     super.dispose();
   }
 
@@ -328,24 +328,28 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
       case 'face_detection':
         await _inference(
           model: _faceDetection,
+          handler: runFaceDetector,
           cameraImage: cameraImage,
         );
         break;
       case 'face_mesh':
         await _inference(
           model: _faceMesh,
+          handler: runFaceMesh,
           cameraImage: cameraImage,
         );
         break;
       case 'hands':
         await _inference(
           model: _hands,
+          handler: runHandDetector,
           cameraImage: cameraImage,
         );
         break;
       case 'pose_landmark':
         await _inference(
           model: _pose,
+          handler: runPoseEstimator,
           cameraImage: cameraImage,
         );
         break;
@@ -354,6 +358,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
   Future<void> _inference({
     dynamic model,
+    Function handler,
     CameraImage cameraImage,
   }) async {
     if (model.interpreter != null) {
@@ -366,17 +371,19 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
       });
 
       if (_draw) {
-        var isolateData = IsolateData(
-          cameraImage,
-          model.interpreter.address,
-          widget.modelName,
+        final params = {
+          'cameraImage': cameraImage,
+          'detectorAddress': model.getAddress,
+        };
+
+        final inferenceResults = await _sendPort(
+          handler: handler,
+          params: params,
         );
-        var inferenceResults = await _sendPort(isolateData);
 
         switch (widget.modelName) {
           case 'face_detection':
             _bbox = inferenceResults == null ? null : inferenceResults['bbox'];
-
             break;
           case 'face_mesh':
             _faceLandmarks =
@@ -399,11 +406,22 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     }
   }
 
-  Future<Map<String, dynamic>> _sendPort(IsolateData isolateData) async {
-    var responsePort = ReceivePort();
-    _isolateUtils.sendPort
-        .send(isolateData..responsePort = responsePort.sendPort);
-    var results = await responsePort.first;
+  Future<Map<String, dynamic>> _sendPort({
+    @required Function handler,
+    @required Map<String, dynamic> params,
+  }) async {
+    final responsePort = ReceivePort();
+
+    _isolateUtils.sendMessage(
+      handler: handler,
+      params: params,
+      sendPort: _isolateUtils.sendPort,
+      responsePort: responsePort,
+    );
+
+    final results = await responsePort.first;
+    responsePort.close();
+
     return results;
   }
 }
