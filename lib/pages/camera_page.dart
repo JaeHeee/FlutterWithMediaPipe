@@ -16,9 +16,9 @@ import '../utils/isolate_utils.dart';
 
 class CameraPage extends StatefulWidget {
   const CameraPage({
-    @required this.title,
-    @required this.modelName,
-    Key key,
+    required this.title,
+    required this.modelName,
+    Key? key,
   }) : super(key: key);
 
   final String title;
@@ -29,36 +29,37 @@ class CameraPage extends StatefulWidget {
 }
 
 class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
-  CameraController _cameraController;
-  List<CameraDescription> _cameras;
-  CameraDescription _cameraDescription;
+  CameraController? _cameraController;
+  late List<CameraDescription> _cameras;
+  late CameraDescription _cameraDescription;
 
-  bool _isRun;
+  late bool _isRun;
   bool _predicting = false;
   bool _draw = false;
-  double _ratio;
-  Size _screenSize;
-  Rect _bbox;
-  List<Offset> _faceLandmarks;
-  List<Offset> _handLandmarks;
-  List<Offset> _poseLandmarks;
 
-  FaceDetection _faceDetection;
-  FaceMesh _faceMesh;
-  Hands _hands;
-  Pose _pose;
+  late double _ratio;
+  late Size _screenSize;
+  Rect? _bbox;
+  List<Offset>? _faceLandmarks;
+  List<Offset>? _handLandmarks;
+  List<Offset>? _poseLandmarks;
 
-  IsolateUtils _isolateUtils;
+  late FaceDetection _faceDetection;
+  late FaceMesh _faceMesh;
+  late Hands _hands;
+  late Pose _pose;
+
+  late IsolateUtils _isolateUtils;
 
   @override
   void initState() {
-    WidgetsBinding.instance.addObserver(this);
+    // WidgetsBinding.instance.addObserver(this);
     initStateAsync();
     super.initState();
   }
 
   void initStateAsync() async {
-    WidgetsBinding.instance.addObserver(this);
+    // WidgetsBinding.instance.addObserver(this);
 
     _isolateUtils = IsolateUtils();
     await _isolateUtils.initIsolate();
@@ -85,24 +86,24 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (_cameraController == null || !_cameraController.value.isInitialized) {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
       return;
     }
 
     if (state == AppLifecycleState.inactive) {
-      _cameraController.dispose();
+      _cameraController?.dispose();
     } else if (state == AppLifecycleState.resumed) {
-      onNewCameraSelected(_cameraController.description);
+      onNewCameraSelected(_cameraController!.description);
     }
     super.didChangeAppLifecycleState(state);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    // WidgetsBinding.instance.removeObserver(this);
     _cameraController?.dispose();
     _cameraController = null;
-    _isolateUtils?.dispose();
+    _isolateUtils.dispose();
     super.dispose();
   }
 
@@ -125,16 +126,16 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
       enableAudio: false,
     );
 
-    _cameraController.addListener(() {
+    _cameraController!.addListener(() {
       if (mounted) setState(() {});
-      if (_cameraController.value.hasError) {
+      if (_cameraController!.value.hasError) {
         showInSnackBar(
-            'Camera error ${_cameraController.value.errorDescription}');
+            'Camera error ${_cameraController!.value.errorDescription}');
       }
     });
 
     try {
-      await _cameraController.initialize().then((value) {
+      await _cameraController!.initialize().then((value) {
         if (!mounted) return;
       });
     } on CameraException catch (e) {
@@ -149,15 +150,15 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   void _imageStreamToggle() {
     _isRun = !_isRun;
     if (_isRun) {
-      _cameraController.startImageStream(onLatestImageAvailable);
+      _cameraController!.startImageStream(onLatestImageAvailable);
     } else {
-      _cameraController.stopImageStream();
+      _cameraController!.stopImageStream();
     }
   }
 
   void _cameraDirectionToggle() {
     _isRun = false;
-    if (_cameraController.description.lensDirection ==
+    if (_cameraController!.description.lensDirection ==
         _cameras.first.lensDirection) {
       onNewCameraSelected(_cameras.last);
     } else {
@@ -233,7 +234,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   }
 
   Widget _buildCameraPreview() {
-    if (_cameraController == null || !_cameraController.value.isInitialized) {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
       return Container(
         color: Colors.black,
         child: const Center(
@@ -242,11 +243,11 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
       );
     }
 
-    _ratio = _screenSize.width / _cameraController.value.previewSize.height;
+    _ratio = _screenSize.width / _cameraController!.value.previewSize!.height;
 
     return Stack(
       children: [
-        CameraPreview(_cameraController),
+        CameraPreview(_cameraController!),
         _drawBoundingBox(),
         _drawLandmarks(),
         _drawHands(),
@@ -261,10 +262,10 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
       return Container();
     } else {
       return Positioned(
-          left: _ratio * _bbox.left,
-          top: _ratio * _bbox.top,
-          width: _ratio * _bbox.width,
-          height: _ratio * _bbox.height,
+          left: _ratio * _bbox!.left,
+          top: _ratio * _bbox!.top,
+          width: _ratio * _bbox!.width,
+          height: _ratio * _bbox!.height,
           child: Container(
               decoration: BoxDecoration(
             border: Border.all(color: color, width: 3),
@@ -278,7 +279,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     } else {
       return CustomPaint(
         painter: FaceMeshPainter(
-          points: _faceLandmarks,
+          points: _faceLandmarks!,
           ratio: _ratio,
         ),
       );
@@ -291,7 +292,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     } else {
       return CustomPaint(
         painter: HandsPainter(
-          points: _handLandmarks,
+          points: _handLandmarks!,
           ratio: _ratio,
         ),
       );
@@ -304,7 +305,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     } else {
       return CustomPaint(
         painter: PosePainter(
-          points: _poseLandmarks,
+          points: _poseLandmarks!,
           ratio: _ratio,
         ),
       );
@@ -358,8 +359,8 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
   Future<void> _inference({
     dynamic model,
-    Function handler,
-    CameraImage cameraImage,
+    required Function handler,
+    required CameraImage cameraImage,
   }) async {
     if (model.interpreter != null) {
       if (_predicting || !_draw) {
@@ -406,9 +407,9 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     }
   }
 
-  Future<Map<String, dynamic>> _sendPort({
-    @required Function handler,
-    @required Map<String, dynamic> params,
+  Future<Map<String, dynamic>?> _sendPort({
+    required Function handler,
+    required Map<String, dynamic> params,
   }) async {
     final responsePort = ReceivePort();
 

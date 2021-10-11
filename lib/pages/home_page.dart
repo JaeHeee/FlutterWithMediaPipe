@@ -2,19 +2,19 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_with_mediapipe/pages/camera_page.dart';
 
 import '../constants/data.dart';
+import 'camera_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key key}) : super(key: key);
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  PageController _pageController;
+  late PageController _pageController;
   double _currentPageValue = 0.0;
 
   @override
@@ -23,7 +23,7 @@ class _HomePageState extends State<HomePage> {
     _pageController = PageController(viewportFraction: 0.8)
       ..addListener(() {
         setState(() {
-          _currentPageValue = _pageController.page;
+          _currentPageValue = _pageController.page!;
         });
       });
   }
@@ -84,8 +84,8 @@ class _HomePageState extends State<HomePage> {
           MaterialPageRoute(
             builder: (context) {
               return CameraPage(
-                title: models[index]['title'],
-                modelName: models[index]['model'],
+                title: models[index]['title']!,
+                modelName: models[index]['model']!,
               );
             },
           ),
@@ -95,7 +95,7 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15.0),
           image: DecorationImage(
-            image: AssetImage(models[index]['image']),
+            image: AssetImage(models[index]['image']!),
             fit: BoxFit.cover,
           ),
         ),
@@ -120,7 +120,7 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    models[index]['title'],
+                    models[index]['title']!,
                     style: TextStyle(
                       color: Colors.grey,
                       fontSize: ScreenUtil().setSp(20.0),
@@ -131,7 +131,7 @@ class _HomePageState extends State<HomePage> {
                     height: ScreenUtil().setHeight(8.0),
                   ),
                   Text(
-                    models[index]['text'],
+                    models[index]['text']!,
                     style: TextStyle(
                       color: Colors.grey,
                       fontSize: ScreenUtil().setSp(12.0),
@@ -152,7 +152,7 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         image: DecorationImage(
           image: AssetImage(
-            models[_currentPageValue.round()]['image'],
+            models[_currentPageValue.round()]['image']!,
           ),
           fit: BoxFit.cover,
         ),

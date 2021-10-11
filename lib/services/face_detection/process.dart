@@ -5,12 +5,12 @@ import 'convert_detection.dart';
 import 'detection.dart';
 import 'options.dart';
 
-List<Detection> process(
-    {OptionsFace options,
-    List<double> rawScores,
-    List<double> rawBoxes,
-    List<Anchor> anchors}) {
-  // var boxData = decodeBox(rawBoxes, anchors, options);
+List<Detection> process({
+  required OptionsFace options,
+  required List<double> rawScores,
+  required List<double> rawBoxes,
+  required List<Anchor> anchors,
+}) {
   var detectionScores = <double>[];
   var detectionClasses = <int>[];
 

@@ -7,8 +7,8 @@ class FaceMeshPainter extends CustomPainter {
   final double ratio;
 
   FaceMeshPainter({
-    @required this.points,
-    @required this.ratio,
+    required this.points,
+    required this.ratio,
   });
 
   @override

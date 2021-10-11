@@ -12,31 +12,28 @@ class Pose {
   static const int INPUT_SIZE = 256;
   static const double THRESHOLD = 0.8;
 
-  InterpreterOptions _interpreterOptions;
-  Interpreter _interpreter;
-  ImageProcessor _imageProcessor;
+  Interpreter? _interpreter;
 
-  List<List<int>> _outputShapes;
-  List<TfLiteType> _outputTypes;
+  final _outputShapes = <List<int>>[];
+  final _outputTypes = <TfLiteType>[];
 
-  Interpreter get interpreter => _interpreter;
-  int get getAddress => _interpreter.address;
+  Interpreter? get interpreter => _interpreter;
+  int get getAddress => _interpreter!.address;
 
-  Pose({Interpreter interpreter}) {
+  Pose({Interpreter? interpreter}) {
     _loadModel(interpreter: interpreter);
   }
 
-  void _loadModel({Interpreter interpreter}) async {
+  void _loadModel({Interpreter? interpreter}) async {
     try {
-      _interpreterOptions = InterpreterOptions();
+      final interpreterOptions = InterpreterOptions();
 
       _interpreter = interpreter ??
           await Interpreter.fromAsset(MODEL_FILE_NAME,
-              options: _interpreterOptions);
+              options: interpreterOptions);
 
-      final outputTensors = _interpreter.getOutputTensors();
-      _outputShapes = [];
-      _outputTypes = [];
+      final outputTensors = _interpreter!.getOutputTensors();
+
       outputTensors.forEach((tensor) {
         _outputShapes.add(tensor.shape);
         _outputTypes.add(tensor.type);
@@ -47,16 +44,16 @@ class Pose {
   }
 
   TensorImage _getProcessedImage(TensorImage inputImage) {
-    _imageProcessor ??= ImageProcessorBuilder()
+    final imageProcessor = ImageProcessorBuilder()
         .add(ResizeOp(INPUT_SIZE, INPUT_SIZE, ResizeMethod.BILINEAR))
         .add(NormalizeOp(0, 255))
         .build();
 
-    inputImage = _imageProcessor.process(inputImage);
+    inputImage = imageProcessor.process(inputImage);
     return inputImage;
   }
 
-  Map<String, dynamic> _predict(image_lib.Image image) {
+  Map<String, dynamic>? _predict(image_lib.Image image) {
     if (_interpreter == null) {
       print('Interpreter not initialized');
       return null;
@@ -86,7 +83,7 @@ class Pose {
       4: outputIdentity4.buffer,
     };
 
-    _interpreter.runForMultipleInputs(inputs, outputs);
+    _interpreter!.runForMultipleInputs(inputs, outputs);
 
     if (outputIdentity1.getDoubleValue(0) < THRESHOLD) {
       return null;
@@ -106,12 +103,12 @@ class Pose {
   }
 }
 
-Map<String, dynamic> runPoseEstimator(Map<String, dynamic> params) {
+Map<String, dynamic>? runPoseEstimator(Map<String, dynamic> params) {
   final faceDetection =
       Pose(interpreter: Interpreter.fromAddress(params['detectorAddress']));
 
   final image = ImageUtils.convertCameraImage(params['cameraImage']);
-  final result = faceDetection._predict(image);
+  final result = faceDetection._predict(image!);
 
   return result;
 }

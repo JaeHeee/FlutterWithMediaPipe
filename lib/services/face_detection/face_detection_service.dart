@@ -18,69 +18,49 @@ class FaceDetection {
   static const int INPUT_SIZE = 128;
   static const double THRESHOLD = 0.7;
 
-  InterpreterOptions _interpreterOptions;
-  Interpreter _interpreter;
-  ImageProcessor _imageProcessor;
+  Interpreter? _interpreter;
 
-  List<List<int>> _outputShapes;
-  List<TfLiteType> _outputTypes;
+  late ImageProcessor _imageProcessor;
+  late List<Anchor> _anchors;
 
-  OptionsFace options = OptionsFace(
-      numClasses: 1,
-      numBoxes: 896,
-      numCoords: 16,
-      keypointCoordOffset: 4,
-      ignoreClasses: [],
-      scoreClippingThresh: 100.0,
-      minScoreThresh: 0.75,
-      numKeypoints: 6,
-      numValuesPerKeypoint: 2,
-      reverseOutputOrder: true,
-      boxCoordOffset: 0,
-      xScale: 128,
-      yScale: 128,
-      hScale: 128,
-      wScale: 128);
+  final _outputShapes = <List<int>>[];
+  final _outputTypes = <TfLiteType>[];
 
-  AnchorOption anchors = AnchorOption(
-      inputSizeHeight: 128,
-      inputSizeWidth: 128,
-      minScale: 0.1484375,
-      maxScale: 0.75,
-      anchorOffsetX: 0.5,
-      anchorOffsetY: 0.5,
-      numLayers: 4,
-      featureMapHeight: [],
-      featureMapWidth: [],
-      strides: [8, 16, 16, 16],
-      aspectRatios: [1.0],
-      reduceBoxesInLowestLayer: false,
-      interpolatedScaleAspectRatio: 1.0,
-      fixedAnchorSize: true);
+  Interpreter? get interpreter => _interpreter;
+  int get getAddress => _interpreter!.address;
 
-  List<Anchor> _anchors;
-
-  Interpreter get interpreter => _interpreter;
-  int get getAddress => _interpreter.address;
-
-  FaceDetection({Interpreter interpreter}) {
+  FaceDetection({Interpreter? interpreter}) {
     _loadModel(interpreter: interpreter);
   }
 
-  void _loadModel({Interpreter interpreter}) async {
+  void _loadModel({Interpreter? interpreter}) async {
+    final anchorOption = AnchorOption(
+        inputSizeHeight: 128,
+        inputSizeWidth: 128,
+        minScale: 0.1484375,
+        maxScale: 0.75,
+        anchorOffsetX: 0.5,
+        anchorOffsetY: 0.5,
+        numLayers: 4,
+        featureMapHeight: [],
+        featureMapWidth: [],
+        strides: [8, 16, 16, 16],
+        aspectRatios: [1.0],
+        reduceBoxesInLowestLayer: false,
+        interpolatedScaleAspectRatio: 1.0,
+        fixedAnchorSize: true);
     try {
-      _interpreterOptions = InterpreterOptions();
+      final interpreterOptions = InterpreterOptions();
 
-      _anchors = generateAnchors(anchors);
+      _anchors = generateAnchors(anchorOption);
       _interpreter = interpreter ??
           await Interpreter.fromAsset(
             MODEL_FILE_NAME,
-            options: _interpreterOptions,
+            options: interpreterOptions,
           );
 
-      final outputTensors = _interpreter.getOutputTensors();
-      _outputShapes = [];
-      _outputTypes = [];
+      final outputTensors = _interpreter!.getOutputTensors();
+
       outputTensors.forEach((tensor) {
         _outputShapes.add(tensor.shape);
         _outputTypes.add(tensor.type);
@@ -91,7 +71,7 @@ class FaceDetection {
   }
 
   TensorImage _getProcessedImage(TensorImage inputImage) {
-    _imageProcessor ??= ImageProcessorBuilder()
+    _imageProcessor = ImageProcessorBuilder()
         .add(ResizeOp(INPUT_SIZE, INPUT_SIZE, ResizeMethod.BILINEAR))
         .add(NormalizeOp(127.5, 127.5))
         .build();
@@ -100,11 +80,28 @@ class FaceDetection {
     return inputImage;
   }
 
-  Map<String, dynamic> _predict(image_lib.Image image) {
+  Map<String, dynamic>? _predict(image_lib.Image image) {
     if (_interpreter == null) {
       print('Interpreter not initialized');
       return null;
     }
+
+    final options = OptionsFace(
+        numClasses: 1,
+        numBoxes: 896,
+        numCoords: 16,
+        keypointCoordOffset: 4,
+        ignoreClasses: [],
+        scoreClippingThresh: 100.0,
+        minScoreThresh: 0.75,
+        numKeypoints: 6,
+        numValuesPerKeypoint: 2,
+        reverseOutputOrder: true,
+        boxCoordOffset: 0,
+        xScale: 128,
+        yScale: 128,
+        hScale: 128,
+        wScale: 128);
 
     if (Platform.isAndroid) {
       image = image_lib.copyRotate(image, -90);
@@ -125,7 +122,7 @@ class FaceDetection {
     };
 
     // run inference
-    _interpreter.runForMultipleInputs(inputs, outputs);
+    _interpreter!.runForMultipleInputs(inputs, outputs);
 
     final rawBoxes = outputFaces.getDoubleList();
     final rawScores = outputScores.getDoubleList();
@@ -143,7 +140,7 @@ class FaceDetection {
     final rectFaces = <Map<String, dynamic>>[];
 
     for (var detection in detections) {
-      Rect bbox;
+      Rect? bbox;
       final score = detection.score;
       if (score > THRESHOLD) {
         bbox = Rect.fromLTRB(
@@ -164,11 +161,11 @@ class FaceDetection {
   }
 }
 
-Map<String, dynamic> runFaceDetector(Map<String, dynamic> params) {
+Map<String, dynamic>? runFaceDetector(Map<String, dynamic> params) {
   final faceDetection = FaceDetection(
       interpreter: Interpreter.fromAddress(params['detectorAddress']));
+  final image = ImageUtils.convertCameraImage(params['cameraImage'])!;
 
-  final image = ImageUtils.convertCameraImage(params['cameraImage']);
   final result = faceDetection._predict(image);
 
   return result;

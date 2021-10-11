@@ -1,11 +1,9 @@
 import 'dart:isolate';
 
-import 'package:flutter/material.dart';
-
 class IsolateUtils {
-  Isolate _isolate;
-  SendPort _sendPort;
-  ReceivePort _receivePort;
+  Isolate? _isolate;
+  late SendPort _sendPort;
+  late ReceivePort _receivePort;
 
   SendPort get sendPort => _sendPort;
 
@@ -23,7 +21,7 @@ class IsolateUtils {
     final childReceivePort = ReceivePort();
     mainSendPort.send(childReceivePort.sendPort);
 
-    await for (final _IsolateData isolateData in childReceivePort) {
+    await for (final _IsolateData? isolateData in childReceivePort) {
       if (isolateData != null) {
         final results = isolateData.handler(isolateData.params);
         isolateData.responsePort.send(results);
@@ -32,10 +30,10 @@ class IsolateUtils {
   }
 
   void sendMessage({
-    @required Function handler,
-    @required Map<String, dynamic> params,
-    @required SendPort sendPort,
-    @required ReceivePort responsePort,
+    required Function handler,
+    required Map<String, dynamic> params,
+    required SendPort sendPort,
+    required ReceivePort responsePort,
   }) {
     final isolateData = _IsolateData(
       handler: handler,
@@ -47,7 +45,7 @@ class IsolateUtils {
 
   void dispose() {
     _receivePort.close();
-    _isolate.kill(priority: Isolate.immediate);
+    _isolate?.kill(priority: Isolate.immediate);
     _isolate = null;
   }
 }
@@ -58,8 +56,8 @@ class _IsolateData {
   SendPort responsePort;
 
   _IsolateData({
-    @required this.handler,
-    @required this.params,
-    @required this.responsePort,
+    required this.handler,
+    required this.params,
+    required this.responsePort,
   });
 }

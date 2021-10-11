@@ -4,7 +4,7 @@ import 'package:image/image.dart' as image_lib;
 /// ImageUtils
 class ImageUtils {
   /// Converts a [CameraImage] in YUV420 format to [Image] in RGB format
-  static image_lib.Image convertCameraImage(CameraImage cameraImage) {
+  static image_lib.Image? convertCameraImage(CameraImage cameraImage) {
     if (cameraImage.format.group == ImageFormatGroup.yuv420) {
       return convertYUV420ToImage(cameraImage);
     } else if (cameraImage.format.group == ImageFormatGroup.bgra8888) {
@@ -17,8 +17,8 @@ class ImageUtils {
   /// Converts a [CameraImage] in BGRA888 format to [Image] in RGB format
   static image_lib.Image convertBGRA8888ToImage(CameraImage cameraImage) {
     var img = image_lib.Image.fromBytes(
-      cameraImage.planes[0].width,
-      cameraImage.planes[0].height,
+      cameraImage.planes[0].width!,
+      cameraImage.planes[0].height!,
       cameraImage.planes[0].bytes,
       format: image_lib.Format.bgra,
     );
@@ -38,7 +38,7 @@ class ImageUtils {
     for (var w = 0; w < width; w++) {
       for (var h = 0; h < height; h++) {
         final uvIndex =
-            uvPixelStride * (w / 2).floor() + uvRowStride * (h / 2).floor();
+            uvPixelStride! * (w / 2).floor() + uvRowStride * (h / 2).floor();
         final index = h * width + w;
 
         final y = cameraImage.planes[0].bytes[index];

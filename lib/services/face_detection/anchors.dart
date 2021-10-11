@@ -15,20 +15,20 @@ class AnchorOption {
   final bool fixedAnchorSize;
 
   AnchorOption({
-    this.inputSizeWidth,
-    this.inputSizeHeight,
-    this.minScale,
-    this.maxScale,
-    this.anchorOffsetX,
-    this.anchorOffsetY,
-    this.numLayers,
-    this.featureMapWidth,
-    this.featureMapHeight,
-    this.strides,
-    this.aspectRatios,
-    this.reduceBoxesInLowestLayer,
-    this.interpolatedScaleAspectRatio,
-    this.fixedAnchorSize,
+    required this.inputSizeWidth,
+    required this.inputSizeHeight,
+    required this.minScale,
+    required this.maxScale,
+    required this.anchorOffsetX,
+    required this.anchorOffsetY,
+    required this.numLayers,
+    required this.featureMapWidth,
+    required this.featureMapHeight,
+    required this.strides,
+    required this.aspectRatios,
+    required this.reduceBoxesInLowestLayer,
+    required this.interpolatedScaleAspectRatio,
+    required this.fixedAnchorSize,
   });
 
   int get stridesSize {

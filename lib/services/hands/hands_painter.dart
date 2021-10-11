@@ -7,8 +7,8 @@ class HandsPainter extends CustomPainter {
   final double ratio;
 
   HandsPainter({
-    @required this.points,
-    @required this.ratio,
+    required this.points,
+    required this.ratio,
   });
 
   @override
