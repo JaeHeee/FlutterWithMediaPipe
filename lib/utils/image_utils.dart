@@ -31,14 +31,14 @@ class ImageUtils {
     final height = cameraImage.height;
 
     final uvRowStride = cameraImage.planes[1].bytesPerRow;
-    final uvPixelStride = cameraImage.planes[1].bytesPerPixel;
+    final uvPixelStride = cameraImage.planes[1].bytesPerPixel!;
 
     final image = image_lib.Image(width, height);
 
     for (var w = 0; w < width; w++) {
       for (var h = 0; h < height; h++) {
         final uvIndex =
-            uvPixelStride! * (w / 2).floor() + uvRowStride * (h / 2).floor();
+            uvPixelStride * (w / 2).floor() + uvRowStride * (h / 2).floor();
         final index = h * width + w;
 
         final y = cameraImage.planes[0].bytes[index];
