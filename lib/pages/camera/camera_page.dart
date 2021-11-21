@@ -13,6 +13,7 @@ import '../../services/hands/hands_service.dart';
 import '../../services/pose/pose_painter.dart';
 import '../../services/pose/pose_service.dart';
 import '../../utils/isolate_utils.dart';
+import 'widget/model_painter.dart';
 
 class CameraPage extends StatefulWidget {
   const CameraPage({
@@ -164,8 +165,8 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
   void showInSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('message'),
+      SnackBar(
+        content: Text(message),
       ),
     );
   }
@@ -194,6 +195,91 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
       ),
     );
   }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      title: Text(
+        widget.title,
+        style: TextStyle(
+            color: Colors.white,
+            fontSize: ScreenUtil().setSp(28),
+            fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildCameraPreview() {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+      return Container(
+        color: Colors.black,
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    _ratio = _screenSize.width / _cameraController!.value.previewSize!.height;
+
+    return Stack(
+      children: [
+        CameraPreview(_cameraController!),
+        _drawBoundingBox,
+        _drawLandmarks,
+        _drawHands,
+        _drawPose,
+      ],
+    );
+  }
+
+  Widget get _drawBoundingBox {
+    Color color = Colors.primaries[0];
+    _bbox ??= Rect.zero;
+
+    return Visibility(
+      visible: _bbox != null && _draw,
+      child: Positioned(
+        left: _ratio * _bbox!.left,
+        top: _ratio * _bbox!.top,
+        width: _ratio * _bbox!.width,
+        height: _ratio * _bbox!.height,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: color, width: 3),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget get _drawLandmarks => Visibility(
+        visible: _faceLandmarks != null && _draw,
+        child: ModelPainter(
+          customPainter: FaceMeshPainter(
+            points: _faceLandmarks ?? [],
+            ratio: _ratio,
+          ),
+        ),
+      );
+
+  Widget get _drawHands => Visibility(
+        visible: _handLandmarks != null && _draw,
+        child: ModelPainter(
+          customPainter: HandsPainter(
+            points: _handLandmarks ?? [],
+            ratio: _ratio,
+          ),
+        ),
+      );
+
+  Widget get _drawPose => Visibility(
+        visible: _poseLandmarks != null && _draw,
+        child: ModelPainter(
+          customPainter: PosePainter(
+            points: _poseLandmarks ?? [],
+            ratio: _ratio,
+          ),
+        ),
+      );
 
   Row _buildFloatingActionButton() {
     return Row(
@@ -226,97 +312,6 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildCameraPreview() {
-    if (_cameraController == null || !_cameraController!.value.isInitialized) {
-      return Container(
-        color: Colors.black,
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    _ratio = _screenSize.width / _cameraController!.value.previewSize!.height;
-
-    return Stack(
-      children: [
-        CameraPreview(_cameraController!),
-        _drawBoundingBox(),
-        _drawLandmarks(),
-        _drawHands(),
-        _drawPose(),
-      ],
-    );
-  }
-
-  Widget _drawBoundingBox() {
-    Color color = Colors.primaries[0];
-    if (_bbox == null || !_draw) {
-      return Container();
-    } else {
-      return Positioned(
-          left: _ratio * _bbox!.left,
-          top: _ratio * _bbox!.top,
-          width: _ratio * _bbox!.width,
-          height: _ratio * _bbox!.height,
-          child: Container(
-              decoration: BoxDecoration(
-            border: Border.all(color: color, width: 3),
-          )));
-    }
-  }
-
-  Widget _drawLandmarks() {
-    if (_faceLandmarks == null || !_draw) {
-      return Container();
-    } else {
-      return CustomPaint(
-        painter: FaceMeshPainter(
-          points: _faceLandmarks!,
-          ratio: _ratio,
-        ),
-      );
-    }
-  }
-
-  Widget _drawHands() {
-    if (_handLandmarks == null || !_draw) {
-      return Container();
-    } else {
-      return CustomPaint(
-        painter: HandsPainter(
-          points: _handLandmarks!,
-          ratio: _ratio,
-        ),
-      );
-    }
-  }
-
-  Widget _drawPose() {
-    if (_poseLandmarks == null || !_draw) {
-      return Container();
-    } else {
-      return CustomPaint(
-        painter: PosePainter(
-          points: _poseLandmarks!,
-          ratio: _ratio,
-        ),
-      );
-    }
-  }
-
-  AppBar _buildAppBar() {
-    return AppBar(
-      title: Text(
-        widget.title,
-        style: TextStyle(
-            color: Colors.white,
-            fontSize: ScreenUtil().setSp(28),
-            fontWeight: FontWeight.bold),
-      ),
     );
   }
 
