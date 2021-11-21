@@ -144,25 +144,6 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     }
   }
 
-  void _imageStreamToggle() {
-    _isRun = !_isRun;
-    if (_isRun) {
-      _cameraController!.startImageStream(_onLatestImageAvailable);
-    } else {
-      _cameraController!.stopImageStream();
-    }
-  }
-
-  void _cameraDirectionToggle() {
-    _isRun = false;
-    if (_cameraController!.description.lensDirection ==
-        _cameras.first.lensDirection) {
-      _onNewCameraSelected(_cameras.last);
-    } else {
-      _onNewCameraSelected(_cameras.first);
-    }
-  }
-
   void _showInSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -182,33 +163,31 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
     return WillPopScope(
       onWillPop: () async {
-        _imageStreamToggle();
+        _imageStreamToggle;
         Navigator.pop(context);
         return false;
       },
       child: Scaffold(
         backgroundColor: Colors.black,
-        appBar: _buildAppBar(),
-        body: _buildCameraPreview(),
-        floatingActionButton: _buildFloatingActionButton(),
+        appBar: _buildAppBar,
+        body: _buildCameraPreview,
+        floatingActionButton: _buildFloatingActionButton,
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),
     );
   }
 
-  AppBar _buildAppBar() {
-    return AppBar(
-      title: Text(
-        widget.title,
-        style: TextStyle(
-            color: Colors.white,
-            fontSize: ScreenUtil().setSp(28),
-            fontWeight: FontWeight.bold),
-      ),
-    );
-  }
+  AppBar get _buildAppBar => AppBar(
+        title: Text(
+          widget.title,
+          style: TextStyle(
+              color: Colors.white,
+              fontSize: ScreenUtil().setSp(28),
+              fontWeight: FontWeight.bold),
+        ),
+      );
 
-  Widget _buildCameraPreview() {
+  Widget get _buildCameraPreview {
     if (_cameraController == null || !_cameraController!.value.isInitialized) {
       return Container(
         color: Colors.black,
@@ -281,38 +260,52 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
         ),
       );
 
-  Row _buildFloatingActionButton() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        IconButton(
-          onPressed: () {
-            _cameraDirectionToggle();
-            setState(() {
-              _draw = false;
-            });
-          },
-          color: Colors.white,
-          iconSize: ScreenUtil().setWidth(30.0),
-          icon: const Icon(
-            Icons.cameraswitch,
+  Row get _buildFloatingActionButton => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          IconButton(
+            onPressed: () => _cameraDirectionToggle,
+            color: Colors.white,
+            iconSize: ScreenUtil().setWidth(30.0),
+            icon: const Icon(
+              Icons.cameraswitch,
+            ),
           ),
-        ),
-        IconButton(
-          onPressed: () {
-            _imageStreamToggle();
-            setState(() {
-              _draw = !_draw;
-            });
-          },
-          color: Colors.white,
-          iconSize: ScreenUtil().setWidth(30.0),
-          icon: const Icon(
-            Icons.filter_center_focus,
+          IconButton(
+            onPressed: () => _imageStreamToggle,
+            color: Colors.white,
+            iconSize: ScreenUtil().setWidth(30.0),
+            icon: const Icon(
+              Icons.filter_center_focus,
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+
+  void get _imageStreamToggle {
+    setState(() {
+      _draw = !_draw;
+    });
+
+    _isRun = !_isRun;
+    if (_isRun) {
+      _cameraController!.startImageStream(_onLatestImageAvailable);
+    } else {
+      _cameraController!.stopImageStream();
+    }
+  }
+
+  void get _cameraDirectionToggle {
+    setState(() {
+      _draw = false;
+    });
+    _isRun = false;
+    if (_cameraController!.description.lensDirection ==
+        _cameras.first.lensDirection) {
+      _onNewCameraSelected(_cameras.last);
+    } else {
+      _onNewCameraSelected(_cameras.first);
+    }
   }
 
   Future<void> _onLatestImageAvailable(CameraImage cameraImage) async {
@@ -367,27 +360,27 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
           'cameraImage': cameraImage,
           'detectorAddress': model.getAddress,
         };
-
         final inferenceResults = await _sendPort(
           handler: handler,
           params: params,
         );
+        final isInferenceNull = inferenceResults == null;
 
         switch (widget.modelName) {
           case 'face_detection':
-            _bbox = inferenceResults == null ? null : inferenceResults['bbox'];
+            _bbox = isInferenceNull ? null : inferenceResults!['bbox'];
             break;
           case 'face_mesh':
             _faceLandmarks =
-                inferenceResults == null ? null : inferenceResults['point'];
+                isInferenceNull ? null : inferenceResults!['point'];
             break;
           case 'hands':
             _handLandmarks =
-                inferenceResults == null ? null : inferenceResults['point'];
+                isInferenceNull ? null : inferenceResults!['point'];
             break;
           case 'pose_landmark':
             _poseLandmarks =
-                inferenceResults == null ? null : inferenceResults['point'];
+                isInferenceNull ? null : inferenceResults!['point'];
             break;
         }
       }
