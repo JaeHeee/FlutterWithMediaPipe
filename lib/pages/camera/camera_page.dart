@@ -54,15 +54,15 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
   @override
   void initState() {
-    initStateAsync();
+    _initStateAsync();
     super.initState();
   }
 
-  void initStateAsync() async {
+  void _initStateAsync() async {
     _isolateUtils = IsolateUtils();
     await _isolateUtils.initIsolate();
 
-    await initCamera();
+    await _initCamera();
 
     switch (widget.modelName) {
       case 'face_detection':
@@ -91,7 +91,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     if (state == AppLifecycleState.inactive) {
       _cameraController?.dispose();
     } else if (state == AppLifecycleState.resumed) {
-      onNewCameraSelected(_cameraController!.description);
+      _onNewCameraSelected(_cameraController!.description);
     }
     super.didChangeAppLifecycleState(state);
   }
@@ -105,14 +105,14 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   }
 
   // camera
-  Future<void> initCamera() async {
+  Future<void> _initCamera() async {
     _cameras = await availableCameras();
     _cameraDescription = _cameras[1];
     _isRun = false;
-    onNewCameraSelected(_cameraDescription);
+    _onNewCameraSelected(_cameraDescription);
   }
 
-  void onNewCameraSelected(CameraDescription cameraDescription) async {
+  void _onNewCameraSelected(CameraDescription cameraDescription) async {
     if (_cameraController != null) {
       await _cameraController!.dispose();
     }
@@ -126,7 +126,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     _cameraController!.addListener(() {
       if (mounted) setState(() {});
       if (_cameraController!.value.hasError) {
-        showInSnackBar(
+        _showInSnackBar(
             'Camera error ${_cameraController!.value.errorDescription}');
       }
     });
@@ -147,7 +147,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   void _imageStreamToggle() {
     _isRun = !_isRun;
     if (_isRun) {
-      _cameraController!.startImageStream(onLatestImageAvailable);
+      _cameraController!.startImageStream(_onLatestImageAvailable);
     } else {
       _cameraController!.stopImageStream();
     }
@@ -157,13 +157,13 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     _isRun = false;
     if (_cameraController!.description.lensDirection ==
         _cameras.first.lensDirection) {
-      onNewCameraSelected(_cameras.last);
+      _onNewCameraSelected(_cameras.last);
     } else {
-      onNewCameraSelected(_cameras.first);
+      _onNewCameraSelected(_cameras.first);
     }
   }
 
-  void showInSnackBar(String message) {
+  void _showInSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -172,7 +172,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   }
 
   void _showCameraException(CameraException e) {
-    showInSnackBar('Error: ${e.code}\n${e.description}');
+    _showInSnackBar('Error: ${e.code}\n${e.description}');
   }
 
   // Widget
@@ -315,7 +315,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> onLatestImageAvailable(CameraImage cameraImage) async {
+  Future<void> _onLatestImageAvailable(CameraImage cameraImage) async {
     switch (widget.modelName) {
       case 'face_detection':
         await _inference(
