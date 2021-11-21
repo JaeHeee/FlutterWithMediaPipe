@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../constants/data.dart';
-import 'camera_page.dart';
+import 'widgets/model_card.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -69,79 +69,11 @@ class _HomePageState extends State<HomePage> {
           itemCount: models.length,
           itemBuilder: (context, index) {
             var scale = (_currentPageValue - index).abs();
-            return _buildModelCard(index, scale);
+            return ModelCard(
+              index: index,
+              scale: scale,
+            );
           },
-        ),
-      ),
-    );
-  }
-
-  InkWell _buildModelCard(int index, double scale) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) {
-              return CameraPage(
-                title: models[index]['title']!,
-                modelName: models[index]['model']!,
-              );
-            },
-          ),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15.0),
-          image: DecorationImage(
-            image: AssetImage(models[index]['image']!),
-            fit: BoxFit.cover,
-          ),
-        ),
-        margin: EdgeInsets.symmetric(
-          horizontal: ScreenUtil().setWidth(10.0),
-          vertical: ScreenUtil().setHeight(30.0) * scale,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(15.0),
-                  bottomRight: Radius.circular(15.0),
-                ),
-              ),
-              padding: EdgeInsets.all(ScreenUtil().setWidth(16.0)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    models[index]['title']!,
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: ScreenUtil().setSp(20.0),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(
-                    height: ScreenUtil().setHeight(8.0),
-                  ),
-                  Text(
-                    models[index]['text']!,
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: ScreenUtil().setSp(12.0),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );
