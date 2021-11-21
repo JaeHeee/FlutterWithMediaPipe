@@ -114,7 +114,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
   void onNewCameraSelected(CameraDescription cameraDescription) async {
     if (_cameraController != null) {
-      // await _cameraController.dispose();
+      await _cameraController!.dispose();
     }
 
     _cameraController = CameraController(
