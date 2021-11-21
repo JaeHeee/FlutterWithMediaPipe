@@ -5,14 +5,14 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../services/face_detection/face_detection_service.dart';
-import '../services/face_mesh/face_mesh_painter.dart';
-import '../services/face_mesh/face_mesh_service.dart';
-import '../services/hands/hands_painter.dart';
-import '../services/hands/hands_service.dart';
-import '../services/pose/pose_painter.dart';
-import '../services/pose/pose_service.dart';
-import '../utils/isolate_utils.dart';
+import '../../services/face_detection/face_detection_service.dart';
+import '../../services/face_mesh/face_mesh_painter.dart';
+import '../../services/face_mesh/face_mesh_service.dart';
+import '../../services/hands/hands_painter.dart';
+import '../../services/hands/hands_service.dart';
+import '../../services/pose/pose_painter.dart';
+import '../../services/pose/pose_service.dart';
+import '../../utils/isolate_utils.dart';
 
 class CameraPage extends StatefulWidget {
   const CameraPage({
@@ -53,14 +53,11 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
   @override
   void initState() {
-    // WidgetsBinding.instance.addObserver(this);
     initStateAsync();
     super.initState();
   }
 
   void initStateAsync() async {
-    // WidgetsBinding.instance.addObserver(this);
-
     _isolateUtils = IsolateUtils();
     await _isolateUtils.initIsolate();
 
@@ -100,7 +97,6 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    // WidgetsBinding.instance.removeObserver(this);
     _cameraController?.dispose();
     _cameraController = null;
     _isolateUtils.dispose();
