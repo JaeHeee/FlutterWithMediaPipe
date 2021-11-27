@@ -101,11 +101,10 @@ class Hands {
 }
 
 Map<String, dynamic>? runHandDetector(Map<String, dynamic> params) {
-  final faceDetection =
+  final hands =
       Hands(interpreter: Interpreter.fromAddress(params['detectorAddress']));
-
   final image = ImageUtils.convertCameraImage(params['cameraImage']);
-  final result = faceDetection._predict(image!);
+  final result = hands._predict(image!);
 
   return result;
 }

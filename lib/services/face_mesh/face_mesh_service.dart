@@ -96,11 +96,11 @@ class FaceMesh {
 }
 
 Map<String, dynamic>? runFaceMesh(Map<String, dynamic> params) {
-  final faceDetection =
+  final faceMesh =
       FaceMesh(interpreter: Interpreter.fromAddress(params['detectorAddress']));
 
   final image = ImageUtils.convertCameraImage(params['cameraImage']);
-  final result = faceDetection._predict(image!);
+  final result = faceMesh._predict(image!);
 
   return result;
 }

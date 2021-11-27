@@ -121,7 +121,6 @@ class FaceDetection {
       1: outputScores.buffer,
     };
 
-    // run inference
     _interpreter!.runForMultipleInputs(inputs, outputs);
 
     final rawBoxes = outputFaces.getDoubleList();

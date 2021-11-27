@@ -104,11 +104,11 @@ class Pose {
 }
 
 Map<String, dynamic>? runPoseEstimator(Map<String, dynamic> params) {
-  final faceDetection =
+  final pose =
       Pose(interpreter: Interpreter.fromAddress(params['detectorAddress']));
 
   final image = ImageUtils.convertCameraImage(params['cameraImage']);
-  final result = faceDetection._predict(image!);
+  final result = pose._predict(image!);
 
   return result;
 }
