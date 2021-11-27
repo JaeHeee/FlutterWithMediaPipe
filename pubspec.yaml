@@ -29,6 +29,7 @@ dependencies:
   tflite_flutter_helper: ^0.2.1
   flutter_screenutil: ^5.0.0+2
   scidart: ^0.0.2-dev.6
+  get_it: ^7.2.0
 
 dev_dependencies:
   flutter_test:
