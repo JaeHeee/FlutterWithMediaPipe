@@ -136,7 +136,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
         if (!mounted) return;
       });
     } on CameraException catch (e) {
-      _showCameraException(e);
+      _showInSnackBar('Error: ${e.code}\n${e.description}');
     }
 
     if (mounted) {
@@ -150,10 +150,6 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
         content: Text(message),
       ),
     );
-  }
-
-  void _showCameraException(CameraException e) {
-    _showInSnackBar('Error: ${e.code}\n${e.description}');
   }
 
   // Widget
