@@ -1,29 +1,23 @@
-import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_with_mediapipe/constants/data.dart';
 
-import '../../services/face_detection/face_detection_service.dart';
-import '../../services/face_mesh/face_mesh_painter.dart';
-import '../../services/face_mesh/face_mesh_service.dart';
-import '../../services/hands/hands_painter.dart';
 import '../../services/hands/hands_service.dart';
-import '../../services/pose/pose_painter.dart';
-import '../../services/pose/pose_service.dart';
+import '../../services/model_inference_service.dart';
+import '../../services/service_locator.dart';
 import '../../utils/isolate_utils.dart';
-import 'widget/model_painter.dart';
+import 'widget/model_camera_preview.dart';
 
 class CameraPage extends StatefulWidget {
   const CameraPage({
-    required this.title,
-    required this.modelName,
+    required this.index,
     Key? key,
   }) : super(key: key);
 
-  final String title;
-  final String modelName;
+  final int index;
 
   @override
   _CameraPageState createState() => _CameraPageState();
@@ -38,22 +32,12 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   bool _predicting = false;
   bool _draw = false;
 
-  late double _ratio;
-  late Size _screenSize;
-  Rect? _bbox;
-  List<Offset>? _faceLandmarks;
-  List<Offset>? _handLandmarks;
-  List<Offset>? _poseLandmarks;
-
-  late FaceDetection _faceDetection;
-  late FaceMesh _faceMesh;
-  late Hands _hands;
-  late Pose _pose;
-
   late IsolateUtils _isolateUtils;
+  late ModelInferenceService _modelInferenceService;
 
   @override
   void initState() {
+    _modelInferenceService = locator<ModelInferenceService>();
     _initStateAsync();
     super.initState();
   }
@@ -61,24 +45,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   void _initStateAsync() async {
     _isolateUtils = IsolateUtils();
     await _isolateUtils.initIsolate();
-
     await _initCamera();
-
-    switch (widget.modelName) {
-      case 'face_detection':
-        _faceDetection = FaceDetection();
-        break;
-      case 'face_mesh':
-        _faceMesh = FaceMesh();
-        break;
-      case 'hands':
-        _hands = Hands();
-        break;
-      case 'pose_landmark':
-        _pose = Pose();
-        break;
-    }
-
     _predicting = false;
   }
 
@@ -101,10 +68,10 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     _cameraController?.dispose();
     _cameraController = null;
     _isolateUtils.dispose();
+    _modelInferenceService.inferenceResults = null;
     super.dispose();
   }
 
-  // camera
   Future<void> _initCamera() async {
     _cameras = await availableCameras();
     _cameraDescription = _cameras[1];
@@ -152,11 +119,8 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     );
   }
 
-  // Widget
   @override
   Widget build(BuildContext context) {
-    _screenSize = MediaQuery.of(context).size;
-
     return WillPopScope(
       onWillPop: () async {
         _imageStreamToggle;
@@ -166,7 +130,11 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
       child: Scaffold(
         backgroundColor: Colors.black,
         appBar: _buildAppBar,
-        body: _buildCameraPreview,
+        body: ModelCameraPreview(
+          cameraController: _cameraController,
+          index: widget.index,
+          draw: _draw,
+        ),
         floatingActionButton: _buildFloatingActionButton,
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),
@@ -175,84 +143,11 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
   AppBar get _buildAppBar => AppBar(
         title: Text(
-          widget.title,
+          models[widget.index]['title']!,
           style: TextStyle(
               color: Colors.white,
               fontSize: ScreenUtil().setSp(28),
               fontWeight: FontWeight.bold),
-        ),
-      );
-
-  Widget get _buildCameraPreview {
-    if (_cameraController == null || !_cameraController!.value.isInitialized) {
-      return Container(
-        color: Colors.black,
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    _ratio = _screenSize.width / _cameraController!.value.previewSize!.height;
-
-    return Stack(
-      children: [
-        CameraPreview(_cameraController!),
-        _drawBoundingBox,
-        _drawLandmarks,
-        _drawHands,
-        _drawPose,
-      ],
-    );
-  }
-
-  Widget get _drawBoundingBox {
-    Color color = Colors.primaries[0];
-    _bbox ??= Rect.zero;
-
-    return Visibility(
-      visible: _bbox != null && _draw,
-      child: Positioned(
-        left: _ratio * _bbox!.left,
-        top: _ratio * _bbox!.top,
-        width: _ratio * _bbox!.width,
-        height: _ratio * _bbox!.height,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: color, width: 3),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget get _drawLandmarks => Visibility(
-        visible: _faceLandmarks != null && _draw,
-        child: ModelPainter(
-          customPainter: FaceMeshPainter(
-            points: _faceLandmarks ?? [],
-            ratio: _ratio,
-          ),
-        ),
-      );
-
-  Widget get _drawHands => Visibility(
-        visible: _handLandmarks != null && _draw,
-        child: ModelPainter(
-          customPainter: HandsPainter(
-            points: _handLandmarks ?? [],
-            ratio: _ratio,
-          ),
-        ),
-      );
-
-  Widget get _drawPose => Visibility(
-        visible: _poseLandmarks != null && _draw,
-        child: ModelPainter(
-          customPainter: PosePainter(
-            points: _poseLandmarks ?? [],
-            ratio: _ratio,
-          ),
         ),
       );
 
@@ -285,7 +180,12 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
     _isRun = !_isRun;
     if (_isRun) {
-      _cameraController!.startImageStream(_onLatestImageAvailable);
+      _cameraController!.startImageStream(
+        (CameraImage cameraImage) async => await _inference(
+          handler: runHandDetector,
+          cameraImage: cameraImage,
+        ),
+      );
     } else {
       _cameraController!.stopImageStream();
     }
@@ -304,45 +204,11 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _onLatestImageAvailable(CameraImage cameraImage) async {
-    switch (widget.modelName) {
-      case 'face_detection':
-        await _inference(
-          model: _faceDetection,
-          handler: runFaceDetector,
-          cameraImage: cameraImage,
-        );
-        break;
-      case 'face_mesh':
-        await _inference(
-          model: _faceMesh,
-          handler: runFaceMesh,
-          cameraImage: cameraImage,
-        );
-        break;
-      case 'hands':
-        await _inference(
-          model: _hands,
-          handler: runHandDetector,
-          cameraImage: cameraImage,
-        );
-        break;
-      case 'pose_landmark':
-        await _inference(
-          model: _pose,
-          handler: runPoseEstimator,
-          cameraImage: cameraImage,
-        );
-        break;
-    }
-  }
-
   Future<void> _inference({
-    dynamic model,
     required Function handler,
     required CameraImage cameraImage,
   }) async {
-    if (model.interpreter != null) {
+    if (_modelInferenceService.model.interpreter != null) {
       if (_predicting || !_draw) {
         return;
       }
@@ -352,57 +218,15 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
       });
 
       if (_draw) {
-        final params = {
-          'cameraImage': cameraImage,
-          'detectorAddress': model.getAddress,
-        };
-        final inferenceResults = await _sendPort(
-          handler: handler,
-          params: params,
+        await _modelInferenceService.inference(
+          isolateUtils: _isolateUtils,
+          cameraImage: cameraImage,
         );
-        final isInferenceNull = inferenceResults == null;
-
-        switch (widget.modelName) {
-          case 'face_detection':
-            _bbox = isInferenceNull ? null : inferenceResults!['bbox'];
-            break;
-          case 'face_mesh':
-            _faceLandmarks =
-                isInferenceNull ? null : inferenceResults!['point'];
-            break;
-          case 'hands':
-            _handLandmarks =
-                isInferenceNull ? null : inferenceResults!['point'];
-            break;
-          case 'pose_landmark':
-            _poseLandmarks =
-                isInferenceNull ? null : inferenceResults!['point'];
-            break;
-        }
       }
 
       setState(() {
         _predicting = false;
       });
     }
-  }
-
-  Future<Map<String, dynamic>?> _sendPort({
-    required Function handler,
-    required Map<String, dynamic> params,
-  }) async {
-    final responsePort = ReceivePort();
-
-    _isolateUtils.sendMessage(
-      handler: handler,
-      params: params,
-      sendPort: _isolateUtils.sendPort,
-      responsePort: responsePort,
-    );
-
-    final results = await responsePort.first;
-    responsePort.close();
-
-    return results;
   }
 }
