@@ -13,12 +13,14 @@ class FaceMeshPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    var paint1 = Paint()
-      ..color = Colors.amber
-      ..strokeWidth = 4;
+    if (points.isNotEmpty) {
+      var paint1 = Paint()
+        ..color = Colors.amber
+        ..strokeWidth = 4;
 
-    canvas.drawPoints(PointMode.points,
-        points.map((point) => point * ratio).toList(), paint1);
+      canvas.drawPoints(PointMode.points,
+          points.map((point) => point * ratio).toList(), paint1);
+    }
   }
 
   @override

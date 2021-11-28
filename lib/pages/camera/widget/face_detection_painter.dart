@@ -13,12 +13,14 @@ class FaceDetectionPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    var paint = Paint()
-      ..color = Colors.blue
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
+    if (bbox != Rect.zero) {
+      var paint = Paint()
+        ..color = Colors.blue
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3;
 
-    canvas.drawRect(bbox, paint);
+      canvas.drawRect(bbox, paint);
+    }
   }
 
   @override
