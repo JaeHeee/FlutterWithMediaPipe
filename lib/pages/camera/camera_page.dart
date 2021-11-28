@@ -49,20 +49,6 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (_cameraController == null || !_cameraController!.value.isInitialized) {
-      return;
-    }
-
-    if (state == AppLifecycleState.inactive) {
-      _cameraController?.dispose();
-    } else if (state == AppLifecycleState.resumed) {
-      _onNewCameraSelected(_cameraController!.description);
-    }
-    super.didChangeAppLifecycleState(state);
-  }
-
-  @override
   void dispose() {
     _cameraController?.dispose();
     _cameraController = null;
@@ -79,10 +65,6 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   }
 
   void _onNewCameraSelected(CameraDescription cameraDescription) async {
-    if (_cameraController != null) {
-      await _cameraController!.dispose();
-    }
-
     _cameraController = CameraController(
       cameraDescription,
       ResolutionPreset.medium,
