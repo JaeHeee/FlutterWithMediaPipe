@@ -3,6 +3,7 @@ import 'dart:isolate';
 import 'package:camera/camera.dart';
 
 import '../utils/isolate_utils.dart';
+import 'ai_model.dart';
 import 'face_detection/face_detection_service.dart';
 import 'face_mesh/face_mesh_service.dart';
 import 'hands/hands_service.dart';
@@ -17,7 +18,7 @@ enum Models {
 }
 
 class ModelInferenceService {
-  late dynamic model;
+  late AiModel model;
   late Function handler;
   Map<String, dynamic>? inferenceResults;
 

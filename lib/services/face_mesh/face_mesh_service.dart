@@ -5,46 +5,50 @@ import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
 
+import '../../constants/model_file.dart';
 import '../../utils/image_utils.dart';
+import '../ai_model.dart';
 
-class FaceMesh {
-  static const String MODEL_FILE_NAME = 'models/face_landmark.tflite';
-  static const int INPUT_SIZE = 192;
-
-  Interpreter? _interpreter;
-
-  final _outputShapes = <List<int>>[];
-  final _outputTypes = <TfLiteType>[];
-
-  Interpreter? get interpreter => _interpreter;
-  int get getAddress => _interpreter!.address;
-
-  FaceMesh({Interpreter? interpreter}) {
-    _loadModel(interpreter: interpreter);
+// ignore: must_be_immutable
+class FaceMesh extends AiModel {
+  FaceMesh({this.interpreter}) {
+    loadModel();
   }
 
-  void _loadModel({Interpreter? interpreter}) async {
+  final int inputSize = 192;
+
+  @override
+  Interpreter? interpreter;
+
+  @override
+  List<Object> get props => [];
+
+  @override
+  int get getAddress => interpreter!.address;
+
+  @override
+  Future<void> loadModel() async {
     try {
       final interpreterOptions = InterpreterOptions();
 
-      _interpreter = interpreter ??
-          await Interpreter.fromAsset(MODEL_FILE_NAME,
-              options: interpreterOptions);
+      interpreter ??= await Interpreter.fromAsset(ModelFile.faceMesh,
+          options: interpreterOptions);
 
-      final outputTensors = _interpreter!.getOutputTensors();
+      final outputTensors = interpreter!.getOutputTensors();
 
       outputTensors.forEach((tensor) {
-        _outputShapes.add(tensor.shape);
-        _outputTypes.add(tensor.type);
+        outputShapes.add(tensor.shape);
+        outputTypes.add(tensor.type);
       });
     } catch (e) {
       print('Error while creating interpreter: $e');
     }
   }
 
-  TensorImage _getProcessedImage(TensorImage inputImage) {
+  @override
+  TensorImage getProcessedImage(TensorImage inputImage) {
     final imageProcessor = ImageProcessorBuilder()
-        .add(ResizeOp(INPUT_SIZE, INPUT_SIZE, ResizeMethod.BILINEAR))
+        .add(ResizeOp(inputSize, inputSize, ResizeMethod.BILINEAR))
         .add(NormalizeOp(0, 255))
         .build();
 
@@ -52,8 +56,9 @@ class FaceMesh {
     return inputImage;
   }
 
-  Map<String, dynamic>? _predict(image_lib.Image image) {
-    if (_interpreter == null) {
+  @override
+  Map<String, dynamic>? predict(image_lib.Image image) {
+    if (interpreter == null) {
       print('Interpreter not initialized');
       return null;
     }
@@ -64,10 +69,10 @@ class FaceMesh {
     }
     final tensorImage = TensorImage(TfLiteType.float32);
     tensorImage.loadImage(image);
-    final inputImage = _getProcessedImage(tensorImage);
+    final inputImage = getProcessedImage(tensorImage);
 
-    TensorBuffer outputLandmarks = TensorBufferFloat(_outputShapes[0]);
-    TensorBuffer outputScores = TensorBufferFloat(_outputShapes[1]);
+    TensorBuffer outputLandmarks = TensorBufferFloat(outputShapes[0]);
+    TensorBuffer outputScores = TensorBufferFloat(outputShapes[1]);
 
     final inputs = <Object>[inputImage.buffer];
 
@@ -76,7 +81,7 @@ class FaceMesh {
       1: outputScores.buffer,
     };
 
-    _interpreter!.runForMultipleInputs(inputs, outputs);
+    interpreter!.runForMultipleInputs(inputs, outputs);
 
     if (outputScores.getDoubleValue(0) < 0) {
       return null;
@@ -86,8 +91,8 @@ class FaceMesh {
     final landmarkResults = <Offset>[];
     for (var point in landmarkPoints) {
       landmarkResults.add(Offset(
-        point[0] / INPUT_SIZE * image.width,
-        point[1] / INPUT_SIZE * image.height,
+        point[0] / inputSize * image.width,
+        point[1] / inputSize * image.height,
       ));
     }
 
@@ -98,9 +103,8 @@ class FaceMesh {
 Map<String, dynamic>? runFaceMesh(Map<String, dynamic> params) {
   final faceMesh =
       FaceMesh(interpreter: Interpreter.fromAddress(params['detectorAddress']));
-
   final image = ImageUtils.convertCameraImage(params['cameraImage']);
-  final result = faceMesh._predict(image!);
+  final result = faceMesh.predict(image!);
 
   return result;
 }

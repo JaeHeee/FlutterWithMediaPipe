@@ -5,35 +5,38 @@ import 'package:image/image.dart' as image_lib;
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
 
+import '../../constants/model_file.dart';
 import '../../utils/image_utils.dart';
+import '../ai_model.dart';
 import 'anchors.dart';
 import 'generate_anchors.dart';
 import 'non_maximum_suppression.dart';
 import 'options.dart';
 import 'process.dart';
 
-class FaceDetection {
-  static const String MODEL_FILE_NAME =
-      'models/face_detection_short_range.tflite';
-  static const int INPUT_SIZE = 128;
-  static const double THRESHOLD = 0.7;
+// ignore: must_be_immutable
+class FaceDetection extends AiModel {
+  FaceDetection({this.interpreter}) {
+    loadModel();
+  }
 
-  Interpreter? _interpreter;
+  final int inputSize = 128;
+  final double threshold = 0.7;
+
+  @override
+  Interpreter? interpreter;
+
+  @override
+  List<Object> get props => [];
+
+  @override
+  int get getAddress => interpreter!.address;
 
   late ImageProcessor _imageProcessor;
   late List<Anchor> _anchors;
 
-  final _outputShapes = <List<int>>[];
-  final _outputTypes = <TfLiteType>[];
-
-  Interpreter? get interpreter => _interpreter;
-  int get getAddress => _interpreter!.address;
-
-  FaceDetection({Interpreter? interpreter}) {
-    _loadModel(interpreter: interpreter);
-  }
-
-  void _loadModel({Interpreter? interpreter}) async {
+  @override
+  Future<void> loadModel() async {
     final anchorOption = AnchorOption(
         inputSizeHeight: 128,
         inputSizeWidth: 128,
@@ -53,26 +56,27 @@ class FaceDetection {
       final interpreterOptions = InterpreterOptions();
 
       _anchors = generateAnchors(anchorOption);
-      _interpreter = interpreter ??
+      interpreter = interpreter ??
           await Interpreter.fromAsset(
-            MODEL_FILE_NAME,
+            ModelFile.faceDetection,
             options: interpreterOptions,
           );
 
-      final outputTensors = _interpreter!.getOutputTensors();
+      final outputTensors = interpreter!.getOutputTensors();
 
       outputTensors.forEach((tensor) {
-        _outputShapes.add(tensor.shape);
-        _outputTypes.add(tensor.type);
+        outputShapes.add(tensor.shape);
+        outputTypes.add(tensor.type);
       });
     } catch (e) {
       print('Error while creating interpreter: $e');
     }
   }
 
-  TensorImage _getProcessedImage(TensorImage inputImage) {
+  @override
+  TensorImage getProcessedImage(TensorImage inputImage) {
     _imageProcessor = ImageProcessorBuilder()
-        .add(ResizeOp(INPUT_SIZE, INPUT_SIZE, ResizeMethod.BILINEAR))
+        .add(ResizeOp(inputSize, inputSize, ResizeMethod.BILINEAR))
         .add(NormalizeOp(127.5, 127.5))
         .build();
 
@@ -80,8 +84,9 @@ class FaceDetection {
     return inputImage;
   }
 
-  Map<String, dynamic>? _predict(image_lib.Image image) {
-    if (_interpreter == null) {
+  @override
+  Map<String, dynamic>? predict(image_lib.Image image) {
+    if (interpreter == null) {
       print('Interpreter not initialized');
       return null;
     }
@@ -109,10 +114,10 @@ class FaceDetection {
     }
     final tensorImage = TensorImage(TfLiteType.float32);
     tensorImage.loadImage(image);
-    final inputImage = _getProcessedImage(tensorImage);
+    final inputImage = getProcessedImage(tensorImage);
 
-    TensorBuffer outputFaces = TensorBufferFloat(_outputShapes[0]);
-    TensorBuffer outputScores = TensorBufferFloat(_outputShapes[1]);
+    TensorBuffer outputFaces = TensorBufferFloat(outputShapes[0]);
+    TensorBuffer outputScores = TensorBufferFloat(outputShapes[1]);
 
     final inputs = <Object>[inputImage.buffer];
 
@@ -121,7 +126,7 @@ class FaceDetection {
       1: outputScores.buffer,
     };
 
-    _interpreter!.runForMultipleInputs(inputs, outputs);
+    interpreter!.runForMultipleInputs(inputs, outputs);
 
     final rawBoxes = outputFaces.getDoubleList();
     final rawScores = outputScores.getDoubleList();
@@ -131,7 +136,7 @@ class FaceDetection {
         rawBoxes: rawBoxes,
         anchors: _anchors);
 
-    detections = nonMaximumSuppression(detections, THRESHOLD);
+    detections = nonMaximumSuppression(detections, threshold);
     if (detections.isEmpty) {
       return null;
     }
@@ -141,7 +146,7 @@ class FaceDetection {
     for (var detection in detections) {
       Rect? bbox;
       final score = detection.score;
-      if (score > THRESHOLD) {
+      if (score > threshold) {
         bbox = Rect.fromLTRB(
           inputImage.width * detection.xMin,
           inputImage.height * detection.yMin,
@@ -164,8 +169,7 @@ Map<String, dynamic>? runFaceDetector(Map<String, dynamic> params) {
   final faceDetection = FaceDetection(
       interpreter: Interpreter.fromAddress(params['detectorAddress']));
   final image = ImageUtils.convertCameraImage(params['cameraImage'])!;
-
-  final result = faceDetection._predict(image);
+  final result = faceDetection.predict(image);
 
   return result;
 }
