@@ -3,9 +3,8 @@ import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_with_mediapipe/constants/data.dart';
 
-import '../../services/hands/hands_service.dart';
+import '../../constants/data.dart';
 import '../../services/model_inference_service.dart';
 import '../../services/service_locator.dart';
 import '../../utils/isolate_utils.dart';
@@ -181,10 +180,8 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     _isRun = !_isRun;
     if (_isRun) {
       _cameraController!.startImageStream(
-        (CameraImage cameraImage) async => await _inference(
-          handler: runHandDetector,
-          cameraImage: cameraImage,
-        ),
+        (CameraImage cameraImage) async =>
+            await _inference(cameraImage: cameraImage),
       );
     } else {
       _cameraController!.stopImageStream();
@@ -204,10 +201,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _inference({
-    required Function handler,
-    required CameraImage cameraImage,
-  }) async {
+  Future<void> _inference({required CameraImage cameraImage}) async {
     if (_modelInferenceService.model.interpreter != null) {
       if (_predicting || !_draw) {
         return;
