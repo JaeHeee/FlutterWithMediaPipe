@@ -184,6 +184,8 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   }
 
   Future<void> _inference({required CameraImage cameraImage}) async {
+    if (!mounted) return;
+
     if (_modelInferenceService.model.interpreter != null) {
       if (_predicting || !_draw) {
         return;
