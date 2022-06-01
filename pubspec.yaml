@@ -27,7 +27,7 @@ dependencies:
   camera: ^0.9.2+2
   tflite_flutter: ^0.9.0
   tflite_flutter_helper: ^0.2.1
-  flutter_screenutil: ^5.0.0+2
+  flutter_screenutil: ^5.5.3+2
   scidart: ^0.0.2-dev.6
   get_it: ^7.2.0
   equatable: ^2.0.3

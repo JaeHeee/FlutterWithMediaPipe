@@ -14,7 +14,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-        builder: () => MaterialApp(
+        builder: (context , child) {
+          return MaterialApp(
               debugShowCheckedModeBanner: false,
               title: 'Flutter with Mediapipe',
               theme: ThemeData(
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
                 ),
               ),
               home: const HomePage(),
-            ));
+            );
+        });
   }
 }
