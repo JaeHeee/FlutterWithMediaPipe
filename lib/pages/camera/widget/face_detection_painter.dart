@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -18,8 +19,8 @@ class FaceDetectionPainter extends CustomPainter {
         ..color = Colors.blue
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3;
-
-      canvas.drawRect(bbox, paint);
+      var bboxResized = Rect.fromLTRB(bbox.left * ratio, bbox.top * ratio, bbox.right * ratio, bbox.bottom * ratio);
+      canvas.drawRect(bboxResized, paint);
     }
   }
 
