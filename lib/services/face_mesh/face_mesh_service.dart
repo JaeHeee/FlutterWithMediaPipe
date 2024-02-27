@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,8 @@ import '../ai_model.dart';
 
 // ignore: must_be_immutable
 class FaceMesh extends AiModel {
+  Interpreter? interpreter;
+
   FaceMesh({this.interpreter}) {
     loadModel();
   }
@@ -18,13 +21,13 @@ class FaceMesh extends AiModel {
   final int inputSize = 192;
 
   @override
-  Interpreter? interpreter;
-
-  @override
   List<Object> get props => [];
 
   @override
   int get getAddress => interpreter!.address;
+
+  @override
+  Interpreter? get getInterpreter => interpreter;
 
   @override
   Future<void> loadModel() async {
@@ -36,12 +39,12 @@ class FaceMesh extends AiModel {
 
       final outputTensors = interpreter!.getOutputTensors();
 
-      outputTensors.forEach((tensor) {
+      for (var tensor in outputTensors) {
         outputShapes.add(tensor.shape);
         outputTypes.add(tensor.type);
-      });
+      }
     } catch (e) {
-      print('Error while creating interpreter: $e');
+      log('Error while creating interpreter: $e');
     }
   }
 
@@ -59,7 +62,6 @@ class FaceMesh extends AiModel {
   @override
   Map<String, dynamic>? predict(image_lib.Image image) {
     if (interpreter == null) {
-      print('Interpreter not initialized');
       return null;
     }
 

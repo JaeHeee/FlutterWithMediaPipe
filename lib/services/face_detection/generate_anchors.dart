@@ -3,9 +3,8 @@ import 'package:scidart/numdart.dart';
 import 'anchors.dart';
 
 List<Anchor> generateAnchors(AnchorOption options) {
-  var _anchors = <Anchor>[];
+  var anchors = <Anchor>[];
   if (options.stridesSize != options.numLayers) {
-    print('strides_size and num_layers must be equal.');
     return [];
   }
   var layerID = 0;
@@ -83,13 +82,13 @@ List<Anchor> generateAnchors(AnchorOption options) {
             w = anchorWidth[anchorID];
             h = anchorHeight[anchorID];
           }
-          _anchors.add(Anchor(xCenter, yCenter, h, w));
+          anchors.add(Anchor(xCenter, yCenter, h, w));
         }
       }
     }
     layerID = lastSameStrideLayer;
   }
-  return _anchors;
+  return anchors;
 }
 
 double _calculateScale(

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -19,7 +17,7 @@ class CameraPage extends StatefulWidget {
   final int index;
 
   @override
-  _CameraPageState createState() => _CameraPageState();
+  State<CameraPage> createState() => _CameraPageState();
 }
 
 class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
@@ -102,11 +100,11 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
         _imageStreamToggle;
         Navigator.pop(context);
-        return false;
       },
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -186,7 +184,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   Future<void> _inference({required CameraImage cameraImage}) async {
     if (!mounted) return;
 
-    if (_modelInferenceService.model.interpreter != null) {
+    if (_modelInferenceService.model.getInterpreter != null) {
       if (_predicting || !_draw) {
         return;
       }

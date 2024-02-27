@@ -5,12 +5,12 @@ import 'package:tflite_flutter_helper/tflite_flutter_helper.dart';
 
 // ignore: must_be_immutable
 abstract class AiModel extends Equatable {
-  AiModel({this.interpreter});
+  AiModel();
 
   final outputShapes = <List<int>>[];
   final outputTypes = <TfLiteType>[];
 
-  Interpreter? interpreter;
+  Interpreter? getInterpreter;
 
   @override
   List<Object> get props => [];

@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -11,22 +12,24 @@ import '../ai_model.dart';
 
 // ignore: must_be_immutable
 class Hands extends AiModel {
+  Interpreter? interpreter;
+
   Hands({this.interpreter}) {
     loadModel();
   }
 
   final int inputSize = 224;
-  final double exist_threshold = 0.1;
-  final double score_threshold = 0.3;
-
-  @override
-  Interpreter? interpreter;
+  final double existThreshold = 0.1;
+  final double scoreThreshold = 0.3;
 
   @override
   List<Object> get props => [];
 
   @override
   int get getAddress => interpreter!.address;
+
+  @override
+  Interpreter? get getInterpreter => interpreter;
 
   @override
   Future<void> loadModel() async {
@@ -38,12 +41,12 @@ class Hands extends AiModel {
 
       final outputTensors = interpreter!.getOutputTensors();
 
-      outputTensors.forEach((tensor) {
+      for (var tensor in outputTensors) {
         outputShapes.add(tensor.shape);
         outputTypes.add(tensor.type);
-      });
+      }
     } catch (e) {
-      print('Error while creating interpreter: $e');
+      log('Error while creating interpreter: $e');
     }
   }
 
@@ -61,7 +64,6 @@ class Hands extends AiModel {
   @override
   Map<String, dynamic>? predict(image_lib.Image image) {
     if (interpreter == null) {
-      print('Interpreter not initialized');
       return null;
     }
 
@@ -87,8 +89,8 @@ class Hands extends AiModel {
 
     interpreter!.runForMultipleInputs(inputs, outputs);
 
-    if (outputExist.getDoubleValue(0) < exist_threshold ||
-        outputScores.getDoubleValue(0) < score_threshold) {
+    if (outputExist.getDoubleValue(0) < existThreshold ||
+        outputScores.getDoubleValue(0) < scoreThreshold) {
       return null;
     }
 

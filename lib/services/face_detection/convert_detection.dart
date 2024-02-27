@@ -9,7 +9,7 @@ List<Detection> convertToDetections(
     List<double> detectionScores,
     List<int> detectionClasses,
     OptionsFace options) {
-  var _outputDetections = <Detection>[];
+  var outputDetections = <Detection>[];
   for (var i = 0; i < options.numBoxes; i++) {
     if (detectionScores[i] < options.minScoreThresh) continue;
     var boxOffset = 0;
@@ -23,9 +23,9 @@ List<Detection> convertToDetections(
         detectionScores[i],
         detectionClasses[i],
         options.flipVertically);
-    _outputDetections.add(detection);
+    outputDetections.add(detection);
   }
-  return _outputDetections;
+  return outputDetections;
 }
 
 Detection convertToDetection(
@@ -37,7 +37,7 @@ Detection convertToDetection(
   int classID,
   bool flipVertically,
 ) {
-  var _yMin = flipVertically ? 1.0 - boxYMax : boxYMin;
+  var yMin = flipVertically ? 1.0 - boxYMax : boxYMin;
   var width = boxXMax;
   var height = boxYMax;
 
@@ -45,7 +45,7 @@ Detection convertToDetection(
     score,
     classID,
     boxXMin,
-    _yMin,
+    yMin,
     width,
     height,
   );
