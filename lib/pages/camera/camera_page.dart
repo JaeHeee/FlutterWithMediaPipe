@@ -101,10 +101,11 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
+      canPop: true,
       onPopInvoked: (didPop) {
-        _imageStreamToggle;
-        Navigator.pop(context);
+        if (_isRun) {
+          _imageStreamToggle;
+        }
       },
       child: Scaffold(
         backgroundColor: Colors.black,
