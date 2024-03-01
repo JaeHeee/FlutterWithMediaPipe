@@ -1,6 +1,7 @@
 # <p align="center"> Flutter Pipe </p>
 
-![platform-ios](https://img.shields.io/badge/platform-ios%20%7C%20android-lightgrey)
+![platform-ios](https://img.shields.io/badge/platform-ios-lightgrey) 
+<!-- Add this back to link when Android is added to repo: %20%7C%20android -->
 
 <br>
 <br>
