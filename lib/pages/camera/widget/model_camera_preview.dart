@@ -90,7 +90,7 @@ class ModelCameraPreview extends StatelessWidget {
 }
 
 class _ModelPainter extends StatelessWidget {
-  _ModelPainter({
+  const _ModelPainter({
     required this.customPainter,
     Key? key,
   }) : super(key: key);

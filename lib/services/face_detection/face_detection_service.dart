@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'dart:ui';
 
@@ -16,6 +17,8 @@ import 'process.dart';
 
 // ignore: must_be_immutable
 class FaceDetection extends AiModel {
+  Interpreter? interpreter;
+
   FaceDetection({this.interpreter}) {
     loadModel();
   }
@@ -24,13 +27,13 @@ class FaceDetection extends AiModel {
   final double threshold = 0.7;
 
   @override
-  Interpreter? interpreter;
-
-  @override
   List<Object> get props => [];
 
   @override
   int get getAddress => interpreter!.address;
+
+  @override
+  Interpreter? get getInterpreter => interpreter;
 
   late ImageProcessor _imageProcessor;
   late List<Anchor> _anchors;
@@ -64,12 +67,12 @@ class FaceDetection extends AiModel {
 
       final outputTensors = interpreter!.getOutputTensors();
 
-      outputTensors.forEach((tensor) {
+      for (var tensor in outputTensors) {
         outputShapes.add(tensor.shape);
         outputTypes.add(tensor.type);
-      });
+      }
     } catch (e) {
-      print('Error while creating interpreter: $e');
+      log('Error while creating interpreter: $e');
     }
   }
 
@@ -87,7 +90,6 @@ class FaceDetection extends AiModel {
   @override
   Map<String, dynamic>? predict(image_lib.Image image) {
     if (interpreter == null) {
-      print('Interpreter not initialized');
       return null;
     }
 

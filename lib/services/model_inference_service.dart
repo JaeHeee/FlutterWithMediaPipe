@@ -11,10 +11,10 @@ import 'pose/pose_service.dart';
 import 'service_locator.dart';
 
 enum Models {
-  FaceDetection,
-  FaceMesh,
-  Hands,
-  Pose,
+  faceDetection,
+  faceMesh,
+  hands,
+  pose,
 }
 
 class ModelInferenceService {
@@ -22,7 +22,7 @@ class ModelInferenceService {
   late Function handler;
   Map<String, dynamic>? inferenceResults;
 
-  Future<Map<String, dynamic>?> inference({
+  Future<void> inference({
     required IsolateUtils isolateUtils,
     required CameraImage cameraImage,
   }) async {
@@ -44,19 +44,19 @@ class ModelInferenceService {
 
   void setModelConfig(int index) {
     switch (Models.values[index]) {
-      case Models.FaceDetection:
+      case Models.faceDetection:
         model = locator<FaceDetection>();
         handler = runFaceDetector;
         break;
-      case Models.FaceMesh:
+      case Models.faceMesh:
         model = locator<FaceMesh>();
         handler = runFaceMesh;
         break;
-      case Models.Hands:
+      case Models.hands:
         model = locator<Hands>();
         handler = runHandDetector;
         break;
-      case Models.Pose:
+      case Models.pose:
         model = locator<Pose>();
         handler = runPoseEstimator;
         break;
