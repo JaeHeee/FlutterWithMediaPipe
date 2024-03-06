@@ -1,12 +1,12 @@
 name: flutter_with_mediapipe
 description: A new Flutter project.
 
-publish_to: 'none'
+publish_to: "none"
 
 version: 2.0.0
 
 environment:
-  sdk: '>=3.2.6 <4.0.0'
+  sdk: ">=3.2.6 <4.0.0"
 
 dependencies:
   flutter:
@@ -43,4 +43,3 @@ flutter:
   assets:
     - assets/models/
     - assets/images/
-    
